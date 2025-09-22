@@ -43,3 +43,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 # linking glm
 find_package(glm REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
+
+# linking obj loader
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/external/obj)

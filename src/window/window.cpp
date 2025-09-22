@@ -21,7 +21,7 @@ bool Window::init(int width, int height, const char *title, bool resizable)
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, config::OpenGLMajor);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config::OpenGLMajor);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config::OpenGLMinor);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // resizable
