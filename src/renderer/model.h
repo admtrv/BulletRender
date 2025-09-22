@@ -8,6 +8,11 @@
 
 #include "mesh.h"
 
+#include <unordered_map>
+#include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/epsilon.hpp>
+
 namespace renderer {
 
 class Model {
