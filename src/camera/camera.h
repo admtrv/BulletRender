@@ -40,7 +40,7 @@ private:
 // dynamic (flying) camera
 class FlyCamera : public Camera {
 public:
-    explicit FlyCamera(glm::vec3 pos = {0,1,5}, float yaw = -90.f, float pitch = 0.f, float fovDeg = 60.f, float speed = 2.f, float zNear = 0.1f, float zFar = 100.f);
+    explicit FlyCamera(glm::vec3 pos = {0,1,5}, float yaw = -90.f, float pitch = 0.f, float fovDeg = 30.f, float speed = 2.f, float zNear = 0.1f, float zFar = 100.f);
 
     glm::mat4 view() const override;
     glm::mat4 proj(float aspect) const override;
