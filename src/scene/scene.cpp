@@ -6,9 +6,9 @@
 
 namespace scene {
 
-void Scene::addObject(const Model* model, const glm::mat4& transform)
+void Scene::addObject(const Model* model, const glm::mat4& transform, const glm::vec3& color)
 {
-    m_objects.push_back({model, transform});
+    m_objects.push_back({model, transform, color});
 }
 
 void Scene::removeObject(size_t index)

@@ -39,7 +39,7 @@ int main()
     scene::Scene scene;
     scene.setCamera(&camera);
     scene.setLight(&light);
-    scene.addObject(&model, glm::mat4(1.0f));
+    scene.addObject(&model, glm::mat4(1.0f), {1.0f, 0.5f, 0.0f});
 
     // time
     utils::FrameTimer timer;

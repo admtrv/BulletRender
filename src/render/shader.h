@@ -15,6 +15,9 @@
 
 namespace render {
 
+#define VERTEX_SHADER_PATH "shaders/normal.vert.glsl"
+#define FRAG_SHADER_PATH "shaders/normal.frag.glsl"
+
 class Shader {
 public:
     ~Shader();

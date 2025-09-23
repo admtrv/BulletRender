@@ -4,9 +4,6 @@
 
 #include "renderer.h"
 
-#define VERTEX_SHADER_PATH "shaders/normal.vert.glsl"
-#define FRAG_SHADER_PATH "shaders/normal.frag.glsl"
-
 static std::unique_ptr<render::Shader> gShader;
 
 namespace render {
@@ -57,6 +54,7 @@ void Renderer::render(const scene::Scene& scene)
         gShader->setMat4("uView", cam->view());
         gShader->setMat4("uProj", cam->proj(aspect));
         gShader->setVec3("uLightDir", light->getDirection());
+        gShader->setVec3("uColor", object.color);
 
         for (const auto& mesh : object.model->getMeshes())
             mesh.draw();
@@ -67,6 +65,5 @@ void Renderer::resizeViewport(int width, int height)
 {
     glViewport(0, 0, width, height);
 }
-
 
 } // namespace render
