@@ -1,9 +1,10 @@
 /*
  * scene.cpp
  */
+
 #include "scene.h"
 
-namespace renderer {
+namespace scene {
 
 void Scene::addObject(const Model* model, const glm::mat4& transform)
 {
@@ -23,4 +24,4 @@ void Scene::clear()
     m_objects.clear();
 }
 
-} // namespace renderer
+} // namespace scene

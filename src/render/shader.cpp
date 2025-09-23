@@ -4,7 +4,7 @@
 
 #include "shader.h"
 
-namespace {
+namespace render {
 
 std::string readFile(const std::string& path)
 {
@@ -42,10 +42,6 @@ unsigned compile(GLenum type, const char* src)
 
     return shader;
 }
-
-} // namespace
-
-namespace renderer {
 
 bool Shader::loadFromFiles(const std::string& vertPath, const std::string& fragPath)
 {
@@ -117,4 +113,4 @@ void Shader::setVec3(const char* name, const glm::vec3& vec) const
     glUniform3fv(uniformLoc(name), 1, &vec.x);
 }
 
-} // namespace renderer
+} // namespace render

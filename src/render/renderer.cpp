@@ -7,9 +7,9 @@
 #define VERTEX_SHADER_PATH "shaders/normal.vert.glsl"
 #define FRAG_SHADER_PATH "shaders/normal.frag.glsl"
 
-static std::unique_ptr<renderer::Shader> gShader;
+static std::unique_ptr<render::Shader> gShader;
 
-namespace renderer {
+namespace render {
 
 void Renderer::init()
 {
@@ -28,7 +28,7 @@ void Renderer::clear(float r, float g, float b, float a)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::render(const Scene& scene)
+void Renderer::render(const scene::Scene& scene)
 {
     if (!gShader)
     {
@@ -69,4 +69,4 @@ void Renderer::resizeViewport(int width, int height)
 }
 
 
-} // namespace renderer
+} // namespace render

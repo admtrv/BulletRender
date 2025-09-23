@@ -5,9 +5,9 @@
 #pragma once
 
 #include "shader.h"
-#include "model.h"
-#include "mesh.h"
-#include "scene.h"
+#include "scene/model.h"
+#include "scene/mesh.h"
+#include "scene/scene.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -16,7 +16,7 @@
 #include <memory>
 #include <iostream>
 
-namespace renderer {
+namespace render {
 
 // fwd
 class Model;
@@ -26,10 +26,10 @@ class Renderer {
 public:
     static void init();
     static void clear(float r, float g, float b, float a);
-    static void render(const Scene& scene);
+    static void render(const scene::Scene& scene);
 
     static void resizeViewport(int width, int height);
 
 };
 
-} // namespace renderer
+} // namespace render

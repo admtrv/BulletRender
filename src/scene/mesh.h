@@ -9,7 +9,7 @@
 
 #include <vector>
 
-namespace renderer {
+namespace scene {
 
 struct Vertex {
     glm::vec3 position;
@@ -31,4 +31,4 @@ private:
     unsigned m_indexCount=0;
 };
 
-} // namespace renderer
+} // namespace scene

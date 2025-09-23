@@ -33,7 +33,7 @@ public:
     static void swapBuffers();
     static bool shouldClose();
 
-    static void getFramebufferSize(int& width, int& height);
+    static void getSize(int& width, int& height);
 
 
     static GLFWwindow *get();

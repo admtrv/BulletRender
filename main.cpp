@@ -3,15 +3,16 @@
  */
 
 #include "window/window.h"
-#include "renderer/renderer.h"
-#include "renderer/scene.h"
-#include "renderer/model.h"
+#include "render/renderer.h"
+#include "scene/scene.h"
+#include "scene/model.h"
 #include "camera/camera.h"
 #include "light/light.h"
 #include "utils/time.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
 #include <iostream>
 
 int main()
@@ -23,7 +24,7 @@ int main()
     }
 
     // renderer
-    renderer::Renderer::init();
+    render::Renderer::init();
 
     // camera
     camera::FlyCamera camera({0,1.5f,5.0f});
@@ -32,10 +33,10 @@ int main()
     light::DirectionalLight light;
 
     // model
-    renderer::Model model("assets/models/fox.obj");
+    scene::Model model("assets/models/fox.obj");
 
     // scene
-    renderer::Scene scene;
+    scene::Scene scene;
     scene.setCamera(&camera);
     scene.setLight(&light);
     scene.addObject(&model, glm::mat4(1.0f));
@@ -56,13 +57,13 @@ int main()
         // framebuffer size + aspect
         int fbw;
         int fbh;
-        window::Window::getFramebufferSize(fbw, fbh);
-        renderer::Renderer::resizeViewport(fbw, fbh);
+        window::Window::getSize(fbw, fbh);
+        render::Renderer::resizeViewport(fbw, fbh);
         scene.setAspect(fbh > 0 ? float(fbw) / float(fbh) : 1.0f);
 
         // render
-        renderer::Renderer::clear(0.05f, 0.05f, 0.08f, 1.0f);
-        renderer::Renderer::render(scene);
+        render::Renderer::clear(0.05f, 0.05f, 0.08f, 1.0f);
+        render::Renderer::render(scene);
         window::Window::swapBuffers();
     }
 

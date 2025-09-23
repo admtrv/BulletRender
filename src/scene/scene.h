@@ -1,6 +1,7 @@
 /*
  * scene.h
  */
+
 #pragma once
 
 #include "model.h"
@@ -11,7 +12,7 @@
 
 #include <vector>
 
-namespace renderer {
+namespace scene {
 
 struct SceneObject {
     const Model* model = nullptr;
@@ -46,4 +47,4 @@ private:
     float m_aspect = 1.0f;
 };
 
-} // namespace renderer
+} // namespace scene

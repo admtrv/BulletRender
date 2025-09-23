@@ -4,7 +4,7 @@
 
 #include "mesh.h"
 
-namespace renderer {
+namespace scene {
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices) {
     // index count
@@ -62,5 +62,5 @@ void Mesh::draw() const
     glBindVertexArray(0);
 }
 
-} // namespace renderer
+} // namespace scene
 

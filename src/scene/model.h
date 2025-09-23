@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <iostream>
 
-namespace renderer {
+namespace scene {
 
 class Model {
 public:
@@ -27,4 +27,4 @@ private:
     std::vector<Mesh> m_meshes;
 };
 
-} // namespace renderer
+} // namespace scene

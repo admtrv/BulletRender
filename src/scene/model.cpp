@@ -4,7 +4,7 @@
 
 #include "model.h"
 
-namespace renderer {
+namespace scene {
 
 // key for unique vertex - pair of position and normal indices
 struct VNKey {
@@ -174,4 +174,4 @@ bool Model::loadObj(const std::string& path)
     return true;
 }
 
-} // namespace renderer
+} // namespace scene

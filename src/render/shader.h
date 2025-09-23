@@ -13,7 +13,7 @@
 #include <sstream>
 #include <iostream>
 
-namespace renderer {
+namespace render {
 
 class Shader {
 public:
@@ -29,4 +29,4 @@ private:
     int uniformLoc(const char* name) const;
 };
 
-} // namespace renderer
+} // namespace render
