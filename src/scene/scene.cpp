@@ -6,15 +6,15 @@
 
 namespace scene {
 
-void Scene::addObject(const Model* model, const glm::mat4& transform, const glm::vec3& color)
+Object* Scene::addObject(Model* model)
 {
-    m_objects.push_back({model, transform, color});
+    m_objects.emplace_back(std::make_unique<Object>(model));
+    return m_objects.back().get();
 }
 
 void Scene::removeObject(size_t index)
 {
-    if (index < m_objects.size())
-    {
+    if (index < m_objects.size()) {
         m_objects.erase(m_objects.begin() + index);
     }
 }

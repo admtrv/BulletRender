@@ -5,20 +5,35 @@
 #pragma once
 
 #include "model.h"
+#include "transform.h"
 #include "camera/camera.h"
 #include "light/light.h"
+#include "render/material.h"
 
 #include <glm/glm.hpp>
 
 #include <vector>
+#include <memory>
 
 namespace scene {
 
-struct Object {
-    const Model* model = nullptr;
-    glm::mat4 transform{1.0f};
-    glm::vec3 color{1.0f, 1.0f, 1.0f};
+class Object {
+public:
+    Object(Model* model = nullptr) : m_model(model) {}
 
+    void setModel(Model* model) { m_model = model; }
+    Model* getModel() const { return m_model; }
+
+    Transform& getTransform() { return m_transform; }
+    const Transform& getTransform() const { return m_transform; }
+
+    render::Material& getMaterial() { return m_material; }
+    const render::Material& getMaterial() const { return m_material; }
+
+private:
+    Model* m_model;
+    Transform m_transform;
+    render::Material m_material;
 };
 
 class Scene {
@@ -26,11 +41,10 @@ public:
     Scene() = default;
     ~Scene() = default;
 
-    void addObject(const Model* model, const glm::mat4& transform, const glm::vec3& color = {1.0f,1.0f,1.0f});
+    Object* addObject(Model* model);
     void removeObject(size_t index);
+    const std::vector<std::unique_ptr<Object>>& getObjects() const { return m_objects; };
     void clear();
-
-    const std::vector<Object>& getObjects() const { return m_objects; }
 
     void setCamera(const camera::Camera* cam) { m_camera = cam; }
     void setLight(const light::Light* light) { m_light = light; }
@@ -41,7 +55,7 @@ public:
     float getAspect() const { return m_aspect; }
 
 private:
-    std::vector<Object> m_objects;
+    std::vector<std::unique_ptr<Object>> m_objects;
 
     const camera::Camera* m_camera = nullptr;
     const light::Light* m_light = nullptr;

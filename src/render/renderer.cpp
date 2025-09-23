@@ -48,16 +48,31 @@ void Renderer::render(const scene::Scene& scene)
 
     for (const auto& object : objects)
     {
-        if (!object.model) continue;
+        if (!object)
+        {
+            continue;
+        }
 
-        gShader->setMat4("uModel", object.transform);
+        const scene::Model* model = object->getModel();
+
+        if (!model)
+        {
+            continue;
+        }
+
+        // common uniforms
         gShader->setMat4("uView", cam->view());
         gShader->setMat4("uProj", cam->proj(aspect));
         gShader->setVec3("uLightDir", light->getDirection());
-        gShader->setVec3("uColor", object.color);
 
-        for (const auto& mesh : object.model->getMeshes())
+        // model uniforms
+        gShader->setMat4("uModel", object->getTransform().getMatrix());
+        gShader->setVec3("uColor", object->getMaterial().getColor());
+
+        for (const auto& mesh : model->getMeshes())
+        {
             mesh.draw();
+        }
     }
 }
 

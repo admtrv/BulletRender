@@ -19,7 +19,8 @@ int main()
 {
     // window
     window::WindowConfig windowCfg{800, 600, "Demo", true};
-    if (!window::Window::init(windowCfg)) {
+    if (!window::Window::init(windowCfg))
+    {
         return -1;
     }
 
@@ -39,7 +40,11 @@ int main()
     scene::Scene scene;
     scene.setCamera(&camera);
     scene.setLight(&light);
-    scene.addObject(&model, glm::mat4(1.0f), {1.0f, 0.5f, 0.0f});
+    scene::Object* object = scene.addObject(&model);
+
+    // tune object
+    object->getMaterial().setColor({1.0f, 0.5f, 0.0f});
+    object->getTransform().setPosition({0, 0, 0});
 
     // time
     utils::FrameTimer timer;
@@ -53,6 +58,9 @@ int main()
 
         // update camera
         camera.update(window::Window::get(), dt);
+
+        // rotate object continuously
+        object->getTransform().rotate({0, 0, 0.5}, dt);
 
         // framebuffer size + aspect
         int fbw;
