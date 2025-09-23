@@ -4,6 +4,7 @@
 
 #include "shader.h"
 
+namespace luchrender {
 namespace render {
 
 std::string readFile(const std::string& path)
@@ -114,3 +115,4 @@ void Shader::setVec3(const char* name, const glm::vec3& vec) const
 }
 
 } // namespace render
+} // namespace luchrender

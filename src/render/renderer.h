@@ -16,6 +16,7 @@
 #include <memory>
 #include <iostream>
 
+namespace luchrender {
 namespace render {
 
 // fwd
@@ -33,3 +34,4 @@ public:
 };
 
 } // namespace render
+} // namespace luchrender

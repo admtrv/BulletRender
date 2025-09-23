@@ -13,6 +13,7 @@
 #include <sstream>
 #include <iostream>
 
+namespace luchrender {
 namespace render {
 
 #define VERTEX_SHADER_PATH "shaders/normal.vert.glsl"
@@ -33,3 +34,4 @@ private:
 };
 
 } // namespace render
+} // namespace luchrender

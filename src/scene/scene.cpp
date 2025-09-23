@@ -4,11 +4,12 @@
 
 #include "scene.h"
 
+namespace luchrender {
 namespace scene {
 
-Object* Scene::addObject(Model* model)
+SceneObject* Scene::addObject(Model* model)
 {
-    m_objects.emplace_back(std::make_unique<Object>(model));
+    m_objects.emplace_back(std::make_unique<SceneObject>(model));
     return m_objects.back().get();
 }
 
@@ -25,3 +26,4 @@ void Scene::clear()
 }
 
 } // namespace scene
+} // namespace luchrender

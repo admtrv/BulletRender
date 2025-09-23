@@ -15,6 +15,8 @@
 
 #include <iostream>
 
+using namespace luchrender;
+
 int main()
 {
     // window
@@ -40,7 +42,8 @@ int main()
     scene::Scene scene;
     scene.setCamera(&camera);
     scene.setLight(&light);
-    scene::Object* object = scene.addObject(&model);
+
+    scene::SceneObject* object = scene.addObject(&model);
 
     // tune object
     object->getMaterial().setColor({1.0f, 0.5f, 0.0f});
@@ -78,4 +81,3 @@ int main()
     window::Window::shutdown();
     return 0;
 }
-

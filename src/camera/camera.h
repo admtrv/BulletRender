@@ -12,6 +12,7 @@
 
 struct GLFWwindow;
 
+namespace luchrender {
 namespace camera {
 
 // basic camera
@@ -57,3 +58,4 @@ private:
 };
 
 } // namespace camera
+} // namespace luchrender

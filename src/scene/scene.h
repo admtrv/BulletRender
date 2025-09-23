@@ -15,11 +15,12 @@
 #include <vector>
 #include <memory>
 
+namespace luchrender {
 namespace scene {
 
-class Object {
+class SceneObject {
 public:
-    Object(Model* model = nullptr) : m_model(model) {}
+    SceneObject(Model* model = nullptr) : m_model(model) {}
 
     void setModel(Model* model) { m_model = model; }
     Model* getModel() const { return m_model; }
@@ -41,9 +42,9 @@ public:
     Scene() = default;
     ~Scene() = default;
 
-    Object* addObject(Model* model);
+    SceneObject* addObject(Model* model);
     void removeObject(size_t index);
-    const std::vector<std::unique_ptr<Object>>& getObjects() const { return m_objects; };
+    const std::vector<std::unique_ptr<SceneObject>>& getObjects() const { return m_objects; };
     void clear();
 
     void setCamera(const camera::Camera* cam) { m_camera = cam; }
@@ -55,7 +56,7 @@ public:
     float getAspect() const { return m_aspect; }
 
 private:
-    std::vector<std::unique_ptr<Object>> m_objects;
+    std::vector<std::unique_ptr<SceneObject>> m_objects;
 
     const camera::Camera* m_camera = nullptr;
     const light::Light* m_light = nullptr;
@@ -64,3 +65,4 @@ private:
 };
 
 } // namespace scene
+} // namespace luchrender

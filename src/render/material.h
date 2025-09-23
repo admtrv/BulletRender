@@ -4,6 +4,7 @@
 #pragma once
 #include <glm/glm.hpp>
 
+namespace luchrender {
 namespace render {
 
 // simple material (color)
@@ -18,3 +19,4 @@ private:
 };
 
 } // namespace render
+} // namespace luchrender

@@ -6,6 +6,7 @@
 
 #include <glm/glm.hpp>
 
+namespace luchrender {
 namespace light {
 
 // basic light
@@ -29,3 +30,4 @@ private:
 };
 
 } // namespace light
+} // namespace luchrender

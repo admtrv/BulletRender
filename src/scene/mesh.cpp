@@ -4,6 +4,7 @@
 
 #include "mesh.h"
 
+namespace luchrender {
 namespace scene {
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices) {
@@ -63,4 +64,4 @@ void Mesh::draw() const
 }
 
 } // namespace scene
-
+} // namespace luchrender

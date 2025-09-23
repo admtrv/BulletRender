@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+namespace luchrender {
 namespace scene {
 
 class Transform {
@@ -94,3 +95,4 @@ private:
 };
 
 } // namespace scene
+} // namespace luchrender

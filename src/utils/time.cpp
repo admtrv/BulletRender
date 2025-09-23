@@ -4,6 +4,7 @@
 
 #include "time.h"
 
+namespace luchrender {
 namespace utils {
 
 double timeSeconds()
@@ -22,3 +23,4 @@ float FrameTimer::tick()
 }
 
 } // namespace utils
+} // namespace luchrender

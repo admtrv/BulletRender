@@ -4,6 +4,7 @@
 
 #include "camera.h"
 
+namespace luchrender {
 namespace camera {
 
 FlyCamera::FlyCamera(glm::vec3 pos, float yaw, float pitch, float fovDeg, float speed, float zNear, float zFar):
@@ -67,3 +68,4 @@ void FlyCamera::update(GLFWwindow* win, float dt)
 }
 
 } // namespace camera
+} // namespace luchrender

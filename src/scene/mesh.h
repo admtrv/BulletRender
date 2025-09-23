@@ -9,6 +9,7 @@
 
 #include <vector>
 
+namespace luchrender {
 namespace scene {
 
 struct Vertex {
@@ -32,3 +33,4 @@ private:
 };
 
 } // namespace scene
+} // namespace luchrender

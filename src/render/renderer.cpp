@@ -4,9 +4,10 @@
 
 #include "renderer.h"
 
-static std::unique_ptr<render::Shader> gShader;
-
+namespace luchrender {
 namespace render {
+
+static std::unique_ptr<Shader> gShader;
 
 void Renderer::init()
 {
@@ -82,3 +83,4 @@ void Renderer::resizeViewport(int width, int height)
 }
 
 } // namespace render
+} // namespace luchrender

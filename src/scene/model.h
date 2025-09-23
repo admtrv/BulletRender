@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <iostream>
 
+namespace luchrender {
 namespace scene {
 
 class Model {
@@ -28,3 +29,4 @@ private:
 };
 
 } // namespace scene
+} // namespace luchrender

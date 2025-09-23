@@ -12,7 +12,7 @@
 #include <string>
 #include <iostream>
 
-
+namespace luchrender {
 namespace window {
 
 struct WindowConfig {
@@ -43,3 +43,4 @@ private:
 };
 
 } // namespace window
+} // namespace luchrender
