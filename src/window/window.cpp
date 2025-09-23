@@ -8,7 +8,7 @@ namespace window {
 
 GLFWwindow *Window::s_Window = nullptr;
 
-bool Window::init(int width, int height, const char *title, bool resizable)
+bool Window::init(const WindowConfig& cfg)
 {
     if (!glfwInit())
     {
@@ -21,9 +21,9 @@ bool Window::init(int width, int height, const char *title, bool resizable)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // resizable
-    glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, cfg.resizable ? GLFW_TRUE : GLFW_FALSE);
 
-    s_Window = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    s_Window = glfwCreateWindow(cfg.width, cfg.height, cfg.title.c_str(), nullptr, nullptr);
 
     if (!s_Window)
     {
@@ -74,6 +74,11 @@ void Window::swapBuffers()
 GLFWwindow *Window::get()
 {
     return s_Window;
+}
+
+void Window::getFramebufferSize(int& width, int& height)
+{
+    glfwGetFramebufferSize(s_Window, &width, &height);
 }
 
 } // namespace window

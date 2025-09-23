@@ -28,22 +28,45 @@ void Renderer::clear(float r, float g, float b, float a)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::beginFrame() {}
-void Renderer::endFrame() {}
-
-void Renderer::drawModel(const Model& model, const Scene& scene, const glm::mat4& modelMatrix)
+void Renderer::render(const Scene& scene)
 {
+    if (!gShader)
+    {
+        return;
+    }
+
     gShader->bind();
 
-    gShader->setMat4("uModel", modelMatrix);
-    gShader->setMat4("uView",  scene.view);
-    gShader->setMat4("uProj",  scene.proj);
-    gShader->setVec3("uLightDir", scene.lightDir);
+    const camera::Camera* cam  = scene.getCamera();
+    const light::Light* light = scene.getLight();
 
-    for (const auto& mesh : model.getMeshes())
+    if (!cam || !light)
     {
-        mesh.draw();
+        std::cerr << "renderer: no camera or light set in scene\n";
+        return;
+    }
+
+    const auto& objects = scene.getObjects();
+    float aspect = scene.getAspect();
+
+    for (const auto& object : objects)
+    {
+        if (!object.model) continue;
+
+        gShader->setMat4("uModel", object.transform);
+        gShader->setMat4("uView", cam->view());
+        gShader->setMat4("uProj", cam->proj(aspect));
+        gShader->setVec3("uLightDir", light->getDirection());
+
+        for (const auto& mesh : object.model->getMeshes())
+            mesh.draw();
     }
 }
+
+void Renderer::resizeViewport(int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
 
 } // namespace renderer

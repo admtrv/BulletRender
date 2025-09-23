@@ -17,6 +17,10 @@ namespace renderer {
 
 class Model {
 public:
+    Model() = default;
+    explicit Model(const std::string& path) { loadObj(path); }
+    ~Model() { m_meshes.clear(); }
+
     bool loadObj(const std::string& path);
     const std::vector<Mesh>& getMeshes() const { return m_meshes; }
 private:

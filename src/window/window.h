@@ -27,11 +27,14 @@ struct WindowConfig {
 
 class Window {
 public:
-    static bool init(int width, int height, const char *title, bool resizable);
+    static bool init(const WindowConfig& cfg);
     static void shutdown();
     static void pollEvents();
     static void swapBuffers();
     static bool shouldClose();
+
+    static void getFramebufferSize(int& width, int& height);
+
 
     static GLFWwindow *get();
 
