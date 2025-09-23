@@ -44,7 +44,6 @@ bool Model::loadObj(const std::string& path)
     tinyobj::ObjReaderConfig config;
     config.triangulate = true;
     config.vertex_color = false;
-    config.mtl_search_path = "";
 
     tinyobj::ObjReader reader;
 

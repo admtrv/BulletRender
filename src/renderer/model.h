@@ -5,13 +5,13 @@
 #pragma once
 
 #include "tiny_obj_loader.h"
-
 #include "mesh.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/epsilon.hpp>
 
 #include <unordered_map>
 #include <iostream>
-#include <glm/glm.hpp>
-#include <glm/gtc/epsilon.hpp>
 
 namespace renderer {
 

@@ -4,12 +4,14 @@
 
 #pragma once
 
+#include "config.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
 #include <string>
+#include <iostream>
 
-
-#include "config.h"
 
 namespace window {
 

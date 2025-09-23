@@ -4,10 +4,6 @@
 
 #include "window.h"
 
-#include <glad/glad.h>
-
-#include <iostream>
-
 namespace window {
 
 GLFWwindow *Window::s_Window = nullptr;
@@ -43,6 +39,10 @@ bool Window::init(int width, int height, const char *title, bool resizable)
         std::cerr << "Failed to initialize GLAD\n";
         return false;
     }
+
+    int w, h; glfwGetFramebufferSize(s_Window, &w, &h);
+    glViewport(0,0,w,h);
+
 
     return true;
 }
