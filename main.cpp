@@ -2,21 +2,22 @@
  * main.cpp
  */
 
-#include "window/window.h"
+#include "app/window.h"
+#include "app/loop.h"
 #include "render/renderer.h"
+#include "render/shader.h"
 #include "scene/scene.h"
 #include "scene/model.h"
 #include "camera/camera.h"
 #include "light/light.h"
-#include "utils/time.h"
 
 using namespace luchrender;
 
 int main()
 {
     // window
-    window::WindowConfig windowCfg{800, 600, "Demo", true};
-    if (!window::Window::init(windowCfg))
+    app::WindowConfig windowCfg{800, 600, "Demo", true};
+    if (!app::Window::init(windowCfg))
     {
         return -1;
     }
@@ -52,31 +53,14 @@ int main()
     utils::FrameTimer timer;
 
     // loop
-    while (!window::Window::shouldClose())
-    {
-        float dt = timer.tick();
+    app::Loop loop(scene);
+    loop.run(
+        [&](float dt) {
+            camera.update(app::Window::get(), dt);
+            object->getTransform().rotateZ(0.5f * dt);
+        }
+    );
 
-        window::Window::pollEvents();
-
-        // update camera
-        camera.update(window::Window::get(), dt);
-
-        // rotate object continuously
-        object->getTransform().rotate({0, 0, 0.5}, dt);
-
-        // framebuffer size + aspect
-        int fbw;
-        int fbh;
-        window::Window::getSize(fbw, fbh);
-        render::Renderer::resizeViewport(fbw, fbh);
-        scene.setAspect(fbh > 0 ? float(fbw) / float(fbh) : 1.0f);
-
-        // render
-        render::Renderer::clear(0.05f, 0.05f, 0.08f, 1.0f);
-        render::Renderer::render(scene);
-        window::Window::swapBuffers();
-    }
-
-    window::Window::shutdown();
+    app::Window::shutdown();
     return 0;
 }

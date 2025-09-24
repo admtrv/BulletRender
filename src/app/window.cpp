@@ -5,7 +5,7 @@
 #include "window.h"
 
 namespace luchrender {
-namespace window {
+namespace app {
 
 GLFWwindow *Window::s_Window = nullptr;
 
@@ -82,5 +82,5 @@ void Window::getSize(int& width, int& height)
     glfwGetFramebufferSize(s_Window, &width, &height);
 }
 
-} // namespace window
+} // namespace app
 } // namespace luchrender

@@ -13,7 +13,7 @@
 #include <iostream>
 
 namespace luchrender {
-namespace window {
+namespace app {
 
 struct WindowConfig {
     int width;
@@ -42,5 +42,5 @@ private:
     static GLFWwindow *s_Window;
 };
 
-} // namespace window
+} // namespace app
 } // namespace luchrender
