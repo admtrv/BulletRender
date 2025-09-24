@@ -10,11 +10,6 @@
 #include "light/light.h"
 #include "utils/time.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <iostream>
-
 using namespace luchrender;
 
 int main()
