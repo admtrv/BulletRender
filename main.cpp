@@ -38,6 +38,9 @@ int main()
     // model
     scene::Model model("assets/models/fox.obj");
 
+    // shader
+    auto shader = std::make_shared<render::Shader>("shaders/normal.vert.glsl", "shaders/normal.frag.glsl");
+
     // scene
     scene::Scene scene;
     scene.setCamera(&camera);
@@ -46,6 +49,7 @@ int main()
     scene::SceneObject* object = scene.addObject(&model);
 
     // tune object
+    object->getMaterial().setShader(shader);
     object->getMaterial().setColor({1.0f, 0.5f, 0.0f});
     object->getTransform().setPosition({0, 0, 0});
 

@@ -7,17 +7,9 @@
 namespace luchrender {
 namespace render {
 
-static std::unique_ptr<Shader> gShader;
-
 void Renderer::init()
 {
     glEnable(GL_DEPTH_TEST);
-
-    gShader = std::make_unique<Shader>();
-    if(!gShader->loadFromFiles(VERTEX_SHADER_PATH, FRAG_SHADER_PATH))
-    {
-        std::cerr << "failed to load shaders\n";
-    }
 }
 
 void Renderer::clear(float r, float g, float b, float a)
@@ -28,14 +20,7 @@ void Renderer::clear(float r, float g, float b, float a)
 
 void Renderer::render(const scene::Scene& scene)
 {
-    if (!gShader)
-    {
-        return;
-    }
-
-    gShader->bind();
-
-    const camera::Camera* cam  = scene.getCamera();
+    const camera::Camera* cam= scene.getCamera();
     const light::Light* light = scene.getLight();
 
     if (!cam || !light)
@@ -44,10 +29,7 @@ void Renderer::render(const scene::Scene& scene)
         return;
     }
 
-    const auto& objects = scene.getObjects();
-    float aspect = scene.getAspect();
-
-    for (const auto& object : objects)
+    for (const auto& object : scene.getObjects())
     {
         if (!object)
         {
@@ -55,20 +37,27 @@ void Renderer::render(const scene::Scene& scene)
         }
 
         const scene::Model* model = object->getModel();
-
         if (!model)
         {
             continue;
         }
 
+        auto shader = object->getMaterial().getShader();
+        if (!shader)
+        {
+            continue;
+        }
+
+        shader->bind();
+
         // common uniforms
-        gShader->setMat4("uView", cam->view());
-        gShader->setMat4("uProj", cam->proj(aspect));
-        gShader->setVec3("uLightDir", light->getDirection());
+        shader->setMat4("uView", cam->view());
+        shader->setMat4("uProj", cam->proj(scene.getAspect()));
+        shader->setVec3("uLightDir", light->getDirection());
 
         // model uniforms
-        gShader->setMat4("uModel", object->getTransform().getMatrix());
-        gShader->setVec3("uColor", object->getMaterial().getColor());
+        shader->setMat4("uModel", object->getTransform().getMatrix());
+        shader->setVec3("uColor", object->getMaterial().getColor());
 
         for (const auto& mesh : model->getMeshes())
         {

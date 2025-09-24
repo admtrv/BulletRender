@@ -16,12 +16,14 @@
 namespace luchrender {
 namespace render {
 
-#define VERTEX_SHADER_PATH "shaders/normal.vert.glsl"
-#define FRAG_SHADER_PATH "shaders/normal.frag.glsl"
-
 class Shader {
 public:
+    Shader(const std::string& vertPath, const std::string& fragPath)
+    {
+        loadFromFiles(vertPath, fragPath);
+    }
     ~Shader();
+
     bool loadFromFiles(const std::string& vertPath, const std::string& fragPath);
     void bind() const;
 

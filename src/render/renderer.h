@@ -28,7 +28,6 @@ public:
     static void init();
     static void clear(float r, float g, float b, float a);
     static void render(const scene::Scene& scene);
-
     static void resizeViewport(int width, int height);
 
 };
