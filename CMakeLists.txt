@@ -71,9 +71,6 @@ if(LUCHRENDER_BUILD_APP)
     # copy resources to binary after compilation
     add_custom_command(TARGET ${BIN_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_SOURCE_DIR}/shaders
-                $<TARGET_FILE_DIR:${BIN_NAME}>/shaders
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_SOURCE_DIR}/assets
                 $<TARGET_FILE_DIR:${BIN_NAME}>/assets
     )

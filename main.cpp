@@ -34,7 +34,7 @@ int main()
     scene::Model model("assets/models/fox.obj");
 
     // shader
-    auto shader = std::make_shared<render::Shader>("shaders/normal.vert.glsl", "shaders/normal.frag.glsl");
+    auto shader = std::make_shared<render::Shader>("assets/shaders/normal.vert.glsl", "assets/shaders/normal.frag.glsl");
 
     // scene
     scene::Scene scene;
