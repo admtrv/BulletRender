@@ -8,6 +8,8 @@
 #include "scene/model.h"
 #include "scene/mesh.h"
 #include "scene/scene.h"
+#include "scene/camera.h"
+#include "scene/light.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>

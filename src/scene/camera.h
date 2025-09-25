@@ -13,7 +13,7 @@
 struct GLFWwindow;
 
 namespace luchrender {
-namespace camera {
+namespace scene {
 
 // basic camera
 class Camera {
@@ -57,5 +57,5 @@ private:
     float m_zFar;
 };
 
-} // namespace camera
+} // namespace scene
 } // namespace luchrender

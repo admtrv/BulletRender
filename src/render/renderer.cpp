@@ -20,8 +20,8 @@ void Renderer::clear(float r, float g, float b, float a)
 
 void Renderer::render(const scene::Scene& scene)
 {
-    const camera::Camera* cam= scene.getCamera();
-    const light::Light* light = scene.getLight();
+    const scene::Camera* cam= scene.getCamera();
+    const scene::Light* light = scene.getLight();
 
     if (!cam || !light)
     {

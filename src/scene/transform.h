@@ -11,6 +11,7 @@
 namespace luchrender {
 namespace scene {
 
+// for now just wcs
 class Transform {
 public:
     Transform() : m_matrix(1.0f) {}
@@ -92,6 +93,7 @@ public:
 
 private:
     glm::mat4 m_matrix;
+    // Transform* m_parent{nullptr};
 };
 
 } // namespace scene

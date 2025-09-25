@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 
 namespace luchrender {
-namespace light {
+namespace scene {
 
 // basic light
 class Light {
@@ -29,5 +29,5 @@ private:
     glm::vec3 m_direction;
 };
 
-} // namespace light
+} // namespace scene
 } // namespace luchrender

@@ -6,8 +6,8 @@
 
 #include "model.h"
 #include "transform.h"
-#include "camera/camera.h"
-#include "light/light.h"
+#include "camera.h"
+#include "light.h"
 #include "render/material.h"
 
 #include <glm/glm.hpp>
@@ -47,19 +47,19 @@ public:
     const std::vector<std::unique_ptr<SceneObject>>& getObjects() const { return m_objects; };
     void clear();
 
-    void setCamera(const camera::Camera* cam) { m_camera = cam; }
-    void setLight(const light::Light* light) { m_light = light; }
+    void setCamera(const Camera* cam) { m_camera = cam; }
+    void setLight(const Light* light) { m_light = light; }
     void setAspect(float aspect) { m_aspect = aspect; }
 
-    const camera::Camera* getCamera() const { return m_camera; }
-    const light::Light* getLight() const { return m_light; }
+    const Camera* getCamera() const { return m_camera; }
+    const Light* getLight() const { return m_light; }
     float getAspect() const { return m_aspect; }
 
 private:
     std::vector<std::unique_ptr<SceneObject>> m_objects;
 
-    const camera::Camera* m_camera = nullptr;
-    const light::Light* m_light = nullptr;
+    const Camera* m_camera = nullptr;
+    const Light* m_light = nullptr;
 
     float m_aspect = 1.0f;
 };
