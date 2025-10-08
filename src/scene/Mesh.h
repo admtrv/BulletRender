@@ -1,5 +1,5 @@
 /*
- * mesh.h
+ * Mesh.h
  */
 
 #pragma once

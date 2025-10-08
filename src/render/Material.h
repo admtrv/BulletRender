@@ -1,9 +1,10 @@
 /*
- * material.h
+ * Material.h
  */
+
 #pragma once
 
-#include "shader.h"
+#include "Shader.h"
 
 #include <glm/glm.hpp>
 

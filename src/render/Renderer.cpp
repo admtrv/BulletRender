@@ -1,8 +1,8 @@
 /*
- * renderer.cpp
+ * Renderer.cpp
  */
 
-#include "renderer.h"
+#include "Renderer.h"
 
 namespace luchrender {
 namespace render {

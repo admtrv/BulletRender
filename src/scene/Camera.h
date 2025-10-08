@@ -1,5 +1,5 @@
 /*
- * camera.h
+ * Camera.h
  */
 
 #pragma once

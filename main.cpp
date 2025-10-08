@@ -2,14 +2,14 @@
  * main.cpp
  */
 
-#include "app/window.h"
-#include "app/loop.h"
-#include "render/renderer.h"
-#include "render/shader.h"
-#include "scene/scene.h"
-#include "scene/model.h"
-#include "scene/camera.h"
-#include "scene/light.h"
+#include "app/Window.h"
+#include "app/Loop.h"
+#include "render/Renderer.h"
+#include "render/Shader.h"
+#include "scene/Scene.h"
+#include "scene/Model.h"
+#include "scene/Camera.h"
+#include "scene/Light.h"
 
 using namespace luchrender;
 

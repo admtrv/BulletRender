@@ -1,8 +1,8 @@
 /*
- * mesh.cpp
+ * Mesh.cpp
  */
 
-#include "mesh.h"
+#include "Mesh.h"
 
 namespace luchrender {
 namespace scene {

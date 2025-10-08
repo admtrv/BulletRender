@@ -1,8 +1,8 @@
 /*
- * camera.cpp
+ * Camera.cpp
  */
 
-#include "camera.h"
+#include "Camera.h"
 
 namespace luchrender {
 namespace scene {

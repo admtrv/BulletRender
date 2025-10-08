@@ -1,5 +1,5 @@
 /*
- * transform.h
+ * Transform.h
  */
 
 #pragma once

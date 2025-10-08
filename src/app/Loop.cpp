@@ -1,8 +1,8 @@
 /*
- * loop.cpp
+ * Loop.cpp
  */
 
-#include "loop.h"
+#include "Loop.h"
 
 namespace luchrender {
 namespace app {

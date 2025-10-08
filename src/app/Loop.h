@@ -1,13 +1,13 @@
 /*
- * loop.h
+ * Loop.h
  */
 
 #pragma once
 
-#include "window.h"
-#include "render/renderer.h"
-#include "scene/scene.h"
-#include "utils/time.h"
+#include "Window.h"
+#include "render/Renderer.h"
+#include "scene/Scene.h"
+#include "utils/Time.h"
 
 #include <functional>
 #include <glm/glm.hpp>

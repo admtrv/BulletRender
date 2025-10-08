@@ -1,10 +1,10 @@
 /*
- * window.h
+ * Window.h
  */
 
 #pragma once
 
-#include "config.h"
+#include "Config.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

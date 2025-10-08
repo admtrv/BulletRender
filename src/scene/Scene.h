@@ -1,14 +1,14 @@
 /*
- * scene.h
+ * Scene.h
  */
 
 #pragma once
 
-#include "model.h"
-#include "transform.h"
-#include "camera.h"
-#include "light.h"
-#include "render/material.h"
+#include "Model.h"
+#include "Transform.h"
+#include "Camera.h"
+#include "Light.h"
+#include "render/Material.h"
 
 #include <glm/glm.hpp>
 

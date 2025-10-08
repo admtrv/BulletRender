@@ -1,5 +1,5 @@
 /*
- * time.h
+ * Time.h
  */
 
 #pragma once

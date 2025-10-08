@@ -1,5 +1,5 @@
 /*
- * light.h
+ * Light.h
  */
 
 #pragma once

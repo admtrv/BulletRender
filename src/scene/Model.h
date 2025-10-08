@@ -1,11 +1,12 @@
 /*
- * model.h
+ * Model.h
  */
 
 #pragma once
 
 #include "tiny_obj_loader.h"
-#include "mesh.h"
+
+#include "Mesh.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/epsilon.hpp>

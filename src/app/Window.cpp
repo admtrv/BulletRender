@@ -1,8 +1,8 @@
 /*
- * window.cpp
+ * Window.cpp
  */
 
-#include "window.h"
+#include "Window.h"
 
 namespace luchrender {
 namespace app {

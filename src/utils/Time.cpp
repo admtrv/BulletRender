@@ -1,8 +1,8 @@
 /*
- * time.cpp
+ * Time.cpp
  */
 
-#include "time.h"
+#include "Time.h"
 
 namespace luchrender {
 namespace utils {

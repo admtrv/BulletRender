@@ -1,15 +1,15 @@
 /*
- * renderer.h
+ * Renderer.h
  */
 
 #pragma once
 
-#include "shader.h"
-#include "scene/model.h"
-#include "scene/mesh.h"
-#include "scene/scene.h"
-#include "scene/camera.h"
-#include "scene/light.h"
+#include "Shader.h"
+#include "scene/Model.h"
+#include "scene/Mesh.h"
+#include "scene/Scene.h"
+#include "scene/Camera.h"
+#include "scene/Light.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>

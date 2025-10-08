@@ -1,5 +1,5 @@
 /*
- * config.h
+ * Config.h
  */
 
 #pragma once
