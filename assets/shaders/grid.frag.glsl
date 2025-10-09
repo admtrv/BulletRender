@@ -5,15 +5,29 @@ in vec2 uv;
 
 uniform mat4 uInvViewProj;   // inverse(P * V)
 uniform mat4 uViewProj;      // P * V
-
-// LOD fade thresholds in pixels-per-cell
-const float FADE_START_PX = 6.0;    // start fading when cell is ~6 px
-const float FADE_END_PX   = 3.0;    // fully fade out by ~3 px
+uniform float uNear;         // camera near
+uniform float uFar;          // camera far
 
 vec3 unproject(vec2 t, float z)
 {
     vec4 p = uInvViewProj * vec4(t * 2.0 - 1.0, z, 1.0);
     return p.xyz / p.w;
+}
+
+// grid function per A Slice of Rendering: returns RGBA where A - line mask
+vec4 gridColor(vec3 pos, float scale)
+{
+    // grid coords at given scale
+    vec2 coord = pos.xz * scale;
+
+    // derivatives for AA
+    vec2 d = fwidth(coord);
+    vec2 g = abs(fract(coord - 0.5) - 0.5) / d;     // distance in pixels to nearest line
+    float line = 1.0 - min(min(g.x, g.y), 1.0);     // 1 on line, 0 outside
+
+    vec3 col = vec3(0.2); // base gray
+
+    return vec4(col, line);
 }
 
 void main()
@@ -32,36 +46,23 @@ void main()
 
     vec3 pos = pNear + dir * t;
 
-    // depth for proper intersections with scene geometry
+    // correct depth write
     vec4 clip  = uViewProj * vec4(pos, 1.0);
-    float depth = clip.z / clip.w * 0.5 + 0.5;
-    gl_FragDepth = clamp(depth - 1e-5, 0.0, 1.0);
+    float ndcZ = clip.z / clip.w;
+    float depth01 = ndcZ * 0.5 + 0.5;
+    gl_FragDepth = clamp(depth01, 0.0, 1.0);
 
-    // distance to nearest grid line in cell units
-    float fx = min(fract(pos.x), 1.0 - fract(pos.x));
-    float fz = min(fract(pos.z), 1.0 - fract(pos.z));
+    // two resolutions summed: coarse and fine
+    vec4 coarse = gridColor(pos, 0.1);          // 10-unit cells
+    vec4 fine   = gridColor(pos, 1.0);          // 1-unit cells
 
-    // cell-units per pixel
-    float dx = max(fwidth(pos.x), 1e-6);
-    float dz = max(fwidth(pos.z), 1e-6);
+    // compose color and mask
+    vec3  col = mix(vec3(0.0), coarse.rgb, coarse.a)
+              + mix(vec3(0.0),   fine.rgb,   fine.a);
+    float mask = clamp(coarse.a + fine.a, 0.0, 1.0);
 
-    // pixels per cell (LOD metric)
-    float pxPerCell = min(1.0 / dx, 1.0 / dz);
-
-    // 1 px line thickness with 1 px antialias
-    const float halfPx = 0.5;
-    float pxX = fx / dx;
-    float pxZ = fz / dz;
-    float maskX = 1.0 - smoothstep(halfPx, halfPx + 1.0, pxX);
-    float maskZ = 1.0 - smoothstep(halfPx, halfPx + 1.0, pxZ);
-    float line  = max(maskX, maskZ);
-
-    // LOD fade
-    float lod = smoothstep(FADE_END_PX, FADE_START_PX, pxPerCell);
-    line *= lod;
-
-    if (line <= 0.0)
+    if (mask <= 0.0)
         discard;
 
-    FragColor = vec4(1.0);
+    FragColor = vec4(col, 1.0);
 }

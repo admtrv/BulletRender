@@ -23,6 +23,9 @@ public:
     virtual glm::mat4 view() const = 0;
     virtual glm::mat4 proj(float aspect) const = 0;
     virtual void update(GLFWwindow* win, float dt) {}
+
+    virtual float getNear() const { return 0.1f; }
+    virtual float getFar()  const { return 100.0f; }
 };
 
 // static camera (fixed view/proj)
@@ -46,6 +49,9 @@ public:
     glm::mat4 view() const override;
     glm::mat4 proj(float aspect) const override;
     void update(GLFWwindow* win, float dt) override;
+
+    float getNear() const override { return m_zNear; }
+    float getFar()  const override { return m_zFar; }
 
 private:
     glm::vec3 m_pos;

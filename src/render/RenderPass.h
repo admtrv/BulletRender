@@ -14,7 +14,7 @@ namespace render {
 class IRenderPass {
 public:
     virtual ~IRenderPass() = default;
-    virtual void render(const scene::Scene& scene, const glm::mat4& view, const glm::mat4& proj) = 0;
+    virtual void render(const scene::Scene& scene) = 0;
 };
 
 } // namespace render

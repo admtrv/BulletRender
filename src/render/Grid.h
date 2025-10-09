@@ -24,7 +24,7 @@ public:
     void setEnabled(bool enabled) { m_enabled = enabled; }
     bool isEnabled() const { return m_enabled; }
 
-    void render(const scene::Scene& scene, const glm::mat4& view, const glm::mat4& proj) override;
+    void render(const scene::Scene& scene) override;
 
 private:
     std::shared_ptr<Shader> m_prog;

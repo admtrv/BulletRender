@@ -38,37 +38,32 @@ void Renderer::registerPostPass(std::shared_ptr<IRenderPass> pass)
 
 void Renderer::render(const scene::Scene& scene)
 {
+    // PrePass
+    for (auto& p : s_pre)
+    {
+        p->render(scene);
+    }
+
+    // BasePass
+    renderBasePass(scene);
+
+    // PostPass
+    for (auto& p : s_post)
+    {
+        p->render(scene);
+    }
+}
+
+void Renderer::renderBasePass(const scene::Scene& scene)
+{
     const scene::Camera* cam = scene.getCamera();
     const scene::Light* light = scene.getLight();
-
     if (!cam || !light)
     {
         std::cerr << "renderer: no camera or light set in scene\n";
         return;
     }
 
-    glm::mat4 view = cam->view();
-    glm::mat4 proj = cam->proj(scene.getAspect());
-
-    // PrePass
-    for (auto& p : s_pre)
-    {
-        p->render(scene, view, proj);
-    }
-
-    // BasePass
-    renderBasePass(scene, view, proj);
-
-    // PostPass
-    for (auto& p : s_post)
-    {
-        p->render(scene, view, proj);
-    }
-}
-
-void Renderer::renderBasePass(const scene::Scene& scene, const glm::mat4& view, const glm::mat4& proj)
-{
-    const scene::Light* light = scene.getLight();
     for (const auto& object : scene.getObjects())
     {
         if (!object)
@@ -89,8 +84,8 @@ void Renderer::renderBasePass(const scene::Scene& scene, const glm::mat4& view, 
         }
 
         shader->bind();
-        shader->setMat4("uView", view);
-        shader->setMat4("uProj", proj);
+        shader->setMat4("uView", cam->view());
+        shader->setMat4("uProj", cam->proj(scene.getAspect()));
         shader->setVec3("uLightDir", light->getDirection());
 
         // model uniforms

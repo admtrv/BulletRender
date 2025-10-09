@@ -40,7 +40,7 @@ public:
     static void registerPostPass(std::shared_ptr<IRenderPass> pass);
 
 private:
-    static void renderBasePass(const scene::Scene& scene, const glm::mat4& view, const glm::mat4& proj);
+    static void renderBasePass(const scene::Scene& scene);
 
     static std::vector<std::shared_ptr<IRenderPass>> s_pre;
     static std::vector<std::shared_ptr<IRenderPass>> s_post;

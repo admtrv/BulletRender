@@ -22,15 +22,23 @@ Grid::~Grid() {
     }
 }
 
-void Grid::render(const scene::Scene& scene, const glm::mat4& view, const glm::mat4& proj)
+void Grid::render(const scene::Scene& scene)
 {
     if (!m_enabled || !m_prog)
     {
         return;
     }
 
-    glm::mat4 invVP = glm::inverse(proj * view);
-    glm::mat4 VP = proj * view;
+    const scene::Camera* cam = scene.getCamera();
+
+    if (!cam )
+    {
+        std::cerr << "grid: no camera in scene\n";
+        return;
+    }
+
+    glm::mat4 view = cam->view();
+    glm::mat4 proj = cam->proj(scene.getAspect());
 
     // depth
     GLboolean depthEnabled = glIsEnabled(GL_DEPTH_TEST);
@@ -42,8 +50,10 @@ void Grid::render(const scene::Scene& scene, const glm::mat4& view, const glm::m
     glDepthFunc(GL_LESS);
 
     m_prog->bind();
-    m_prog->setMat4("uInvViewProj", invVP);
-    m_prog->setMat4("uViewProj", VP);
+    m_prog->setMat4("uInvViewProj", glm::inverse(proj * view));
+    m_prog->setMat4("uViewProj", proj * view);
+    m_prog->setFloat("uNear", cam->getNear());
+    m_prog->setFloat("uFar",  cam->getFar());
 
     glBindVertexArray(m_Vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
