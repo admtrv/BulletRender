@@ -4,6 +4,7 @@
 
 #include "app/Window.h"
 #include "app/Loop.h"
+#include "render/Grid.h"
 #include "render/Renderer.h"
 #include "render/Shader.h"
 #include "scene/Scene.h"
@@ -24,6 +25,10 @@ int main()
 
     // renderer
     render::Renderer::init();
+
+    // grid
+    auto grid = std::make_shared<render::Grid>();
+    render::Renderer::registerPrePass(grid);
 
     // assets
     scene::Model model("assets/models/fox.obj");

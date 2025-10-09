@@ -7,6 +7,9 @@
 namespace luchrender {
 namespace render {
 
+std::vector<std::shared_ptr<IRenderPass>> Renderer::s_pre;
+std::vector<std::shared_ptr<IRenderPass>> Renderer::s_post;
+
 void Renderer::init()
 {
     glEnable(GL_DEPTH_TEST);
@@ -18,9 +21,24 @@ void Renderer::clear(float r, float g, float b, float a)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void Renderer::resizeViewport(int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+void Renderer::registerPrePass(std::shared_ptr<IRenderPass> pass)
+{
+    s_pre.push_back(std::move(pass));
+}
+
+void Renderer::registerPostPass(std::shared_ptr<IRenderPass> pass)
+{
+    s_post.push_back(std::move(pass));
+}
+
 void Renderer::render(const scene::Scene& scene)
 {
-    const scene::Camera* cam= scene.getCamera();
+    const scene::Camera* cam = scene.getCamera();
     const scene::Light* light = scene.getLight();
 
     if (!cam || !light)
@@ -29,6 +47,28 @@ void Renderer::render(const scene::Scene& scene)
         return;
     }
 
+    glm::mat4 view = cam->view();
+    glm::mat4 proj = cam->proj(scene.getAspect());
+
+    // PrePass
+    for (auto& p : s_pre)
+    {
+        p->render(scene, view, proj);
+    }
+
+    // BasePass
+    renderBasePass(scene, view, proj);
+
+    // PostPass
+    for (auto& p : s_post)
+    {
+        p->render(scene, view, proj);
+    }
+}
+
+void Renderer::renderBasePass(const scene::Scene& scene, const glm::mat4& view, const glm::mat4& proj)
+{
+    const scene::Light* light = scene.getLight();
     for (const auto& object : scene.getObjects())
     {
         if (!object)
@@ -49,10 +89,8 @@ void Renderer::render(const scene::Scene& scene)
         }
 
         shader->bind();
-
-        // common uniforms
-        shader->setMat4("uView", cam->view());
-        shader->setMat4("uProj", cam->proj(scene.getAspect()));
+        shader->setMat4("uView", view);
+        shader->setMat4("uProj", proj);
         shader->setVec3("uLightDir", light->getDirection());
 
         // model uniforms
@@ -64,11 +102,6 @@ void Renderer::render(const scene::Scene& scene)
             mesh.draw();
         }
     }
-}
-
-void Renderer::resizeViewport(int width, int height)
-{
-    glViewport(0, 0, width, height);
 }
 
 } // namespace render

@@ -114,5 +114,10 @@ void Shader::setVec3(const char* name, const glm::vec3& vec) const
     glUniform3fv(uniformLoc(name), 1, &vec.x);
 }
 
+void Shader::setFloat(const char* name, float vec) const {
+    glUniform1f(uniformLoc(name), vec);
+}
+
+
 } // namespace render
 } // namespace luchrender
