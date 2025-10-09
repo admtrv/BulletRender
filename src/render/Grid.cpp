@@ -52,8 +52,8 @@ void Grid::render(const scene::Scene& scene)
     m_prog->bind();
     m_prog->setMat4("uInvViewProj", glm::inverse(proj * view));
     m_prog->setMat4("uViewProj", proj * view);
-    m_prog->setFloat("uNear", cam->getNear());
-    m_prog->setFloat("uFar",  cam->getFar());
+    m_prog->setFloat("uNear", cam->near());
+    m_prog->setFloat("uFar",  cam->far());
 
     glBindVertexArray(m_Vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);

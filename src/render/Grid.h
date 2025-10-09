@@ -10,11 +10,11 @@
 #include <memory>
 #include <glad/glad.h>
 
-#define VERT_PATH "assets/shaders/grid.vert.glsl"
-#define FRAG_PATH "assets/shaders/grid.frag.glsl"
-
 namespace luchrender {
 namespace render {
+
+#define VERT_PATH "assets/shaders/grid.vert.glsl"
+#define FRAG_PATH "assets/shaders/grid.frag.glsl"
 
 class Grid final : public IRenderPass {
 public:

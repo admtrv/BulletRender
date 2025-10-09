@@ -40,7 +40,7 @@ int main()
     // scene
     scene::Scene scene;
 
-    scene::FlyCamera camera({0,1.5f,5.0f});
+    scene::FlyCamera camera({0, 1, 5});
     scene.setCamera(&camera);
 
     scene::DirectionalLight light;
