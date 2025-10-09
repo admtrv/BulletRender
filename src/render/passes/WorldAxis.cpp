@@ -1,28 +1,32 @@
 /*
- * Grid.cpp
+ * WorldAxis.cpp
  */
 
-#include "Grid.h"
+#include "WorldAxis.h"
 
+#include <iostream>
+
+#include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <glad/glad.h>
 
 namespace luchrender {
 namespace render {
 
-Grid::Grid(bool enabled) : m_enabled(enabled) {
-    m_prog = std::make_shared<Shader>(VERT_PATH, FRAG_PATH);
+WorldAxis::WorldAxis(bool enabled) : m_enabled(enabled)
+{
+    m_prog = std::make_shared<Shader>(AXIS_VERT_PATH, AXIS_FRAG_PATH);
     glGenVertexArrays(1, &m_Vao);
 }
 
-Grid::~Grid() {
+WorldAxis::~WorldAxis()
+{
     if (m_Vao)
     {
         glDeleteVertexArrays(1, &m_Vao);
     }
 }
 
-void Grid::render(const scene::Scene& scene)
+void WorldAxis::render(const scene::Scene& scene)
 {
     if (!m_enabled || !m_prog)
     {
@@ -30,17 +34,15 @@ void Grid::render(const scene::Scene& scene)
     }
 
     const scene::Camera* cam = scene.getCamera();
-
-    if (!cam )
+    if (!cam)
     {
-        std::cerr << "grid: no camera in scene\n";
+        std::cerr << "axis: no camera in scene\n";
         return;
     }
 
     glm::mat4 view = cam->view();
     glm::mat4 proj = cam->proj(scene.getAspect());
 
-    // depth
     GLboolean depthEnabled = glIsEnabled(GL_DEPTH_TEST);
     if (!depthEnabled)
     {
@@ -53,7 +55,7 @@ void Grid::render(const scene::Scene& scene)
     m_prog->setMat4("uInvViewProj", glm::inverse(proj * view));
     m_prog->setMat4("uViewProj", proj * view);
     m_prog->setFloat("uNear", cam->near());
-    m_prog->setFloat("uFar",  cam->far());
+    m_prog->setFloat("uFar", cam->far());
 
     glBindVertexArray(m_Vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);

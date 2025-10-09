@@ -10,7 +10,7 @@
 #include "scene/Scene.h"
 #include "scene/Camera.h"
 #include "scene/Light.h"
-#include "render/RenderPass.h"
+#include "passes/RenderPass.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>

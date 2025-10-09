@@ -52,7 +52,7 @@ private:
     float m_zFar;
 };
 
-// fly camera (Move: WASD, Camera: Mouse, Toggle Cursor: F1)
+// fly camera (Move: WASD, Camera: Mouse, Boost: Shift, Toggle Cursor: F1)
 class FlyCamera : public Camera {
 public:
     explicit FlyCamera(glm::vec3 pos = {0,1,5},

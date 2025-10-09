@@ -4,7 +4,8 @@
 
 #include "app/Window.h"
 #include "app/Loop.h"
-#include "render/Grid.h"
+#include "render/passes/WorldAxis.h"
+#include "render/passes/Grid.h"
 #include "render/Renderer.h"
 #include "render/Shader.h"
 #include "scene/Scene.h"
@@ -29,6 +30,10 @@ int main()
     // grid
     auto grid = std::make_shared<render::Grid>();
     render::Renderer::registerPrePass(grid);
+
+    // world coordinated
+    auto worldAxis = std::make_shared<render::WorldAxis>();
+    render::Renderer::registerPrePass(worldAxis);
 
     // assets
     scene::Model model("assets/models/fox.obj");

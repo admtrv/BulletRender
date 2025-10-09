@@ -1,11 +1,11 @@
 /*
- * Grid.h
+ * WorldAxis.h
  */
 
 #pragma once
 
 #include "RenderPass.h"
-#include "Shader.h"
+#include "render/Shader.h"
 
 #include <memory>
 #include <glad/glad.h>
@@ -13,13 +13,13 @@
 namespace luchrender {
 namespace render {
 
-#define VERT_PATH "assets/shaders/grid.vert.glsl"
-#define FRAG_PATH "assets/shaders/grid.frag.glsl"
+#define AXIS_VERT_PATH "assets/shaders/axis.vert.glsl"
+#define AXIS_FRAG_PATH "assets/shaders/axis.frag.glsl"
 
-class Grid final : public IRenderPass {
+class WorldAxis final : public IRenderPass {
 public:
-    explicit Grid(bool enabled = true);
-    ~Grid();
+    explicit WorldAxis(bool enabled = true);
+    ~WorldAxis();
 
     void setEnabled(bool enabled) { m_enabled = enabled; }
     bool isEnabled() const { return m_enabled; }
