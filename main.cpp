@@ -6,6 +6,7 @@
 #include "app/Loop.h"
 #include "render/passes/WorldAxis.h"
 #include "render/passes/Grid.h"
+#include "render/passes/Lines.h"
 #include "render/Renderer.h"
 #include "render/Shader.h"
 #include "scene/Scene.h"
@@ -35,6 +36,10 @@ int main()
     auto worldAxis = std::make_shared<render::WorldAxis>();
     render::Renderer::registerPrePass(worldAxis);
 
+    // lines
+    auto lines = std::make_shared<render::Lines>();
+    render::Renderer::registerPrePass(lines);
+
     // assets
     scene::Model model("assets/models/fox.obj");
     std::shared_ptr<render::Shader> shader = std::make_shared<render::Shader>(
@@ -62,6 +67,8 @@ int main()
         [&](float dt) {
             camera.update(app::Window::get(), dt);
             object->getTransform().rotateZ(0.5f * dt);
+            lines->setThickness(5.0f);
+            lines->addLine({-2.0f, 0.0f, -5.0f}, { 7.0f, 6.0f, -8.0f}, {1.0f, 1.0f, 1.0f});
         }
     );
 
