@@ -4,7 +4,7 @@
 
 #include "Shader.h"
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 std::string readFile(const std::string& path)
@@ -120,4 +120,4 @@ void Shader::setFloat(const char* name, float vec) const {
 
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

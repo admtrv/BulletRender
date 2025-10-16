@@ -10,7 +10,7 @@
 #include <memory>
 #include <glad/glad.h>
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 #define VERT_PATH "assets/shaders/grid.vert.glsl"
@@ -33,4 +33,4 @@ private:
 };
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

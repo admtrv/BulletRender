@@ -10,7 +10,7 @@
 
 #include <memory>
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 // simple material (color)
@@ -29,4 +29,4 @@ private:
 };
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

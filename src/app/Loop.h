@@ -12,7 +12,7 @@
 #include <functional>
 #include <glm/glm.hpp>
 
-namespace luchrender {
+namespace BulletRender {
 namespace app {
 
 class Loop {
@@ -29,4 +29,4 @@ private:
 };
 
 } // namespace app
-} // namespace luchrender
+} // namespace BulletRender

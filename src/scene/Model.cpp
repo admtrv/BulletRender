@@ -4,7 +4,7 @@
 
 #include "Model.h"
 
-namespace luchrender {
+namespace BulletRender {
 namespace scene {
 
 // key for unique vertex - pair of position and normal indices
@@ -176,4 +176,4 @@ bool Model::loadObj(const std::string& path)
 }
 
 } // namespace scene
-} // namespace luchrender
+} // namespace BulletRender

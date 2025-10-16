@@ -4,7 +4,7 @@
 
 #include "Camera.h"
 
-namespace luchrender {
+namespace BulletRender {
 namespace scene {
 
 FlyCamera::FlyCamera(glm::vec3 pos,
@@ -175,4 +175,4 @@ void FlyCamera::update(GLFWwindow* win, float dt)
 }
 
 } // namespace scene
-} // namespace luchrender
+} // namespace BulletRender

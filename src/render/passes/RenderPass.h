@@ -8,7 +8,7 @@
 
 #include <glm/glm.hpp>
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 class IRenderPass {
@@ -18,4 +18,4 @@ public:
 };
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

@@ -13,7 +13,7 @@
 #include <sstream>
 #include <iostream>
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 class Shader {
@@ -37,4 +37,4 @@ private:
 };
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

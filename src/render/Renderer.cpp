@@ -4,7 +4,7 @@
 
 #include "Renderer.h"
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 std::vector<std::shared_ptr<IRenderPass>> Renderer::s_pre;
@@ -100,4 +100,4 @@ void Renderer::renderBasePass(const scene::Scene& scene)
 }
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

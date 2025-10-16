@@ -9,7 +9,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 WorldAxis::WorldAxis(bool enabled) : m_enabled(enabled)
@@ -68,4 +68,4 @@ void WorldAxis::render(const scene::Scene& scene)
 }
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

@@ -7,7 +7,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glad/glad.h>
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 Grid::Grid(bool enabled) : m_enabled(enabled) {
@@ -66,4 +66,4 @@ void Grid::render(const scene::Scene& scene)
 }
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

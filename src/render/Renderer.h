@@ -21,7 +21,7 @@
 #include <memory>
 #include <iostream>
 
-namespace luchrender {
+namespace BulletRender {
 namespace render {
 
 // fwd
@@ -48,4 +48,4 @@ private:
 
 
 } // namespace render
-} // namespace luchrender
+} // namespace BulletRender

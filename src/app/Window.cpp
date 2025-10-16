@@ -4,7 +4,7 @@
 
 #include "Window.h"
 
-namespace luchrender {
+namespace BulletRender {
 namespace app {
 
 GLFWwindow *Window::s_Window = nullptr;
@@ -83,4 +83,4 @@ void Window::getSize(int& width, int& height)
 }
 
 } // namespace app
-} // namespace luchrender
+} // namespace BulletRender

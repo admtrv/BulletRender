@@ -1,7 +1,7 @@
 # CMakeLists.txt
 
 cmake_minimum_required(VERSION 3.22)
-project(luchrender)
+project(BulletRender)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -60,10 +60,10 @@ else()
     endif()
 endif()
 
-set(BIN_NAME demo)
-option(LUCHRENDER_BUILD_APP "build standalone app with local main.cpp" ${_default_app})
+set(BIN_NAME Demo)
+option(BULLET_RENDER_BUILD_APP "build standalone app with local main.cpp" ${_default_app})
 
-if(LUCHRENDER_BUILD_APP)
+if(BULLET_RENDER_BUILD_APP)
     add_executable(${BIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
     target_link_libraries(${BIN_NAME} PRIVATE ${LIB_NAME})
     set_target_properties(${BIN_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-namespace luchrender {
+namespace BulletRender {
 namespace scene {
 
 // basic light
@@ -30,4 +30,4 @@ private:
 };
 
 } // namespace scene
-} // namespace luchrender
+} // namespace BulletRender

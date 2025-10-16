@@ -6,7 +6,7 @@
 
 #include <GLFW/glfw3.h>
 
-namespace luchrender {
+namespace BulletRender {
 namespace utils {
 
 // current time in seconds since the application started
@@ -22,4 +22,4 @@ private:
 };
 
 } // namespace utils
-} // namespace luchrender
+} // namespace BulletRender

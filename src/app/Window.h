@@ -12,7 +12,7 @@
 #include <string>
 #include <iostream>
 
-namespace luchrender {
+namespace BulletRender {
 namespace app {
 
 struct WindowConfig {
@@ -21,7 +21,7 @@ struct WindowConfig {
     std::string title;
     bool resizable;
 
-    explicit WindowConfig(int w = 800, int h = 600, std::string t = "luchrender", bool r = true)
+    explicit WindowConfig(int w = 800, int h = 600, std::string t = "BulletRender", bool r = true)
         : width(w), height(h), title(std::move(t)), resizable(r) {}
 };
 
@@ -43,4 +43,4 @@ private:
 };
 
 } // namespace app
-} // namespace luchrender
+} // namespace BulletRender

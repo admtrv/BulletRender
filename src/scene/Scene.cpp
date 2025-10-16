@@ -4,7 +4,7 @@
 
 #include "Scene.h"
 
-namespace luchrender {
+namespace BulletRender {
 namespace scene {
 
 SceneObject* Scene::addObject(Model* model)
@@ -26,4 +26,4 @@ void Scene::clear()
 }
 
 } // namespace scene
-} // namespace luchrender
+} // namespace BulletRender

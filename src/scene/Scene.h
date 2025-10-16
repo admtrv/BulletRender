@@ -15,7 +15,7 @@
 #include <vector>
 #include <memory>
 
-namespace luchrender {
+namespace BulletRender {
 namespace scene {
 
 class SceneObject {
@@ -65,4 +65,4 @@ private:
 };
 
 } // namespace scene
-} // namespace luchrender
+} // namespace BulletRender

@@ -13,7 +13,7 @@
 #include "scene/Camera.h"
 #include "scene/Light.h"
 
-using namespace luchrender;
+using namespace BulletRender;
 
 int main()
 {

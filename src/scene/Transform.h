@@ -8,7 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-namespace luchrender {
+namespace BulletRender {
 namespace scene {
 
 // for now just wcs
@@ -97,4 +97,4 @@ private:
 };
 
 } // namespace scene
-} // namespace luchrender
+} // namespace BulletRender

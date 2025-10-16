@@ -4,7 +4,7 @@
 
 #include "Loop.h"
 
-namespace luchrender {
+namespace BulletRender {
 namespace app {
 
 Loop::Loop(scene::Scene& scene) : m_scene(scene) {}
@@ -42,4 +42,4 @@ void Loop::run(const std::function<void(float)>& update)
 }
 
 } // namespace app
-} // namespace luchrender
+} // namespace BulletRender

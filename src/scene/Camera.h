@@ -12,7 +12,7 @@
 
 struct GLFWwindow;
 
-namespace luchrender {
+namespace BulletRender {
 namespace scene {
 
 #define YAW_LIMIT   89.0f
@@ -98,4 +98,4 @@ private:
 };
 
 } // namespace scene
-} // namespace luchrender
+} // namespace BulletRender
