@@ -38,6 +38,8 @@ static glm::vec3 safeNormalize(const glm::vec3& vector) {
     return vector * glm::inversesqrt(len2);
 }
 
+// generic Model
+
 bool Model::loadObj(const std::string& path)
 {
     m_meshes.clear();
@@ -173,6 +175,72 @@ bool Model::loadObj(const std::string& path)
     }
 
     return true;
+}
+
+// Box
+
+Box::Box() : Box(1.0f, 1.0f, 1.0f) {}
+
+Box::Box(float sizeX, float sizeY, float sizeZ)
+{
+    float hx = sizeX * 0.5f;
+    float hy = sizeY * 0.5f;
+    float hz = sizeZ * 0.5f;
+
+    std::vector<Vertex> vertices;
+    std::vector<unsigned> indices;
+
+    // 24 vertices (4 per face, 6 faces) for proper normals per face
+    // front face (z+)
+    vertices.push_back({{-hx, -hy,  hz}, { 0.0f,  0.0f,  1.0f}});
+    vertices.push_back({{ hx, -hy,  hz}, { 0.0f,  0.0f,  1.0f}});
+    vertices.push_back({{ hx,  hy,  hz}, { 0.0f,  0.0f,  1.0f}});
+    vertices.push_back({{-hx,  hy,  hz}, { 0.0f,  0.0f,  1.0f}});
+
+    // back face (z-)
+    vertices.push_back({{ hx, -hy, -hz}, { 0.0f,  0.0f, -1.0f}});
+    vertices.push_back({{-hx, -hy, -hz}, { 0.0f,  0.0f, -1.0f}});
+    vertices.push_back({{-hx,  hy, -hz}, { 0.0f,  0.0f, -1.0f}});
+    vertices.push_back({{ hx,  hy, -hz}, { 0.0f,  0.0f, -1.0f}});
+
+    // right face (x+)
+    vertices.push_back({{ hx, -hy,  hz}, { 1.0f,  0.0f,  0.0f}});
+    vertices.push_back({{ hx, -hy, -hz}, { 1.0f,  0.0f,  0.0f}});
+    vertices.push_back({{ hx,  hy, -hz}, { 1.0f,  0.0f,  0.0f}});
+    vertices.push_back({{ hx,  hy,  hz}, { 1.0f,  0.0f,  0.0f}});
+
+    // left face (x-)
+    vertices.push_back({{-hx, -hy, -hz}, {-1.0f,  0.0f,  0.0f}});
+    vertices.push_back({{-hx, -hy,  hz}, {-1.0f,  0.0f,  0.0f}});
+    vertices.push_back({{-hx,  hy,  hz}, {-1.0f,  0.0f,  0.0f}});
+    vertices.push_back({{-hx,  hy, -hz}, {-1.0f,  0.0f,  0.0f}});
+
+    // top face (y+)
+    vertices.push_back({{-hx,  hy,  hz}, { 0.0f,  1.0f,  0.0f}});
+    vertices.push_back({{ hx,  hy,  hz}, { 0.0f,  1.0f,  0.0f}});
+    vertices.push_back({{ hx,  hy, -hz}, { 0.0f,  1.0f,  0.0f}});
+    vertices.push_back({{-hx,  hy, -hz}, { 0.0f,  1.0f,  0.0f}});
+
+    // bottom face (y-)
+    vertices.push_back({{-hx, -hy, -hz}, { 0.0f, -1.0f,  0.0f}});
+    vertices.push_back({{ hx, -hy, -hz}, { 0.0f, -1.0f,  0.0f}});
+    vertices.push_back({{ hx, -hy,  hz}, { 0.0f, -1.0f,  0.0f}});
+    vertices.push_back({{-hx, -hy,  hz}, { 0.0f, -1.0f,  0.0f}});
+
+    // indices (2 triangles per face)
+    for (unsigned face = 0; face < 6; face++)
+    {
+        unsigned base = face * 4;
+        indices.push_back(base + 0);
+        indices.push_back(base + 1);
+        indices.push_back(base + 2);
+
+        indices.push_back(base + 0);
+        indices.push_back(base + 2);
+        indices.push_back(base + 3);
+    }
+
+    m_meshes.emplace_back(vertices, indices);
 }
 
 } // namespace scene
