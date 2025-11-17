@@ -32,6 +32,7 @@ public:
     static void pollEvents();
     static void swapBuffers();
     static bool shouldClose();
+    static void setShouldClose(bool value);
 
     static void getSize(int& width, int& height);
 

@@ -15,7 +15,8 @@ namespace utils {
 enum class InputKey {
     SPACE,
     W, A, S, D,
-    UP, DOWN, LEFT, RIGHT
+    UP, DOWN, LEFT, RIGHT,
+    ESCAPE
 };
 
 using InputCallback = std::function<void()>;

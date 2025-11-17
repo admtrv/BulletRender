@@ -67,6 +67,8 @@ int Input::glfwKeyFromInputKey(InputKey key) const
             return GLFW_KEY_LEFT;
         case InputKey::RIGHT:
             return GLFW_KEY_RIGHT;
+        case InputKey::ESCAPE:
+            return GLFW_KEY_ESCAPE;
         default:
             return GLFW_KEY_UNKNOWN;
     }
