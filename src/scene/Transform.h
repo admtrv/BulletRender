@@ -15,81 +15,131 @@ namespace scene {
 // for now just wcs
 class Transform {
 public:
-    Transform() : m_matrix(1.0f) {}
+    Transform() : m_position(0.0f), m_scale(1.0f), m_matrix(1.0f) {}
+
+    // rebuild matrix from components
+    void rebuildMatrix()
+    {
+        glm::mat4 I(1.0f);
+        glm::mat4 T = glm::translate(I, m_position);
+        glm::mat4 Rx = glm::rotate(I, m_rotation.x, glm::vec3(1,0,0));
+        glm::mat4 Ry = glm::rotate(I, m_rotation.y, glm::vec3(0,1,0));
+        glm::mat4 Rz = glm::rotate(I, m_rotation.z, glm::vec3(0,0,1));
+        glm::mat4 S  = glm::scale(I, m_scale);
+
+        // M = T * Rz * Ry * Rx * S
+        m_matrix = T * Rz * Ry * Rx * S;
+    }
 
     // direct matrix operations
     const glm::mat4& getMatrix() const { return m_matrix; }
     void setMatrix(const glm::mat4& mat) { m_matrix = mat; }
 
-    // apply transformations to current matrix
+    // position
+    void setPosition(const glm::vec3& pos)
+    {
+        m_position = pos;
+        rebuildMatrix();
+    }
+
+    glm::vec3 getPosition() const
+    {
+        return m_position;
+    }
+
+    // scale
+    void setScale(const glm::vec3& scale)
+    {
+        m_scale = scale;
+        rebuildMatrix();
+    }
+
+    glm::vec3 getScale() const
+    {
+        return m_scale;
+    }
+
+    // rotation (in radians)
+    void setRotation(const glm::vec3& rotation)
+    {
+        m_rotation = rotation;
+        rebuildMatrix();
+    }
+
+    glm::vec3 getRotation() const
+    {
+        return m_rotation;
+    }
+
+    // apply transformations
 
     // translate
     void translate(const glm::vec3& delta)
     {
-        m_matrix = glm::translate(m_matrix, delta); // m = m * T
+        m_position += delta;
+        rebuildMatrix();
     }
 
     // rotate
     void rotate(const glm::vec3& axis, float angleRad)
     {
-        m_matrix = glm::rotate(m_matrix, angleRad, axis); // m = m * R
+        // convert axis-angle to euler angles and add
+        glm::quat q = glm::angleAxis(angleRad, axis);
+        glm::quat currentQ = glm::quat(glm::mat3(
+            glm::rotate(glm::mat4(1.0f), m_rotation.x, glm::vec3(1,0,0)) *
+            glm::rotate(glm::mat4(1.0f), m_rotation.y, glm::vec3(0,1,0)) *
+            glm::rotate(glm::mat4(1.0f), m_rotation.z, glm::vec3(0,0,1))
+        ));
+        glm::quat newQ = q * currentQ;
+        m_rotation = glm::eulerAngles(newQ);
+        rebuildMatrix();
     }
 
     void rotateX(const float angleRad)
     {
-        m_matrix = glm::rotate(m_matrix, angleRad, glm::vec3(1, 0, 0));
+        m_rotation.x += angleRad;
+        rebuildMatrix();
     }
 
     void rotateY(const float angleRad)
     {
-        m_matrix = glm::rotate(m_matrix, angleRad, glm::vec3(0, 1, 0));
+        m_rotation.y += angleRad;
+        rebuildMatrix();
     }
 
     void rotateZ(const float angleRad)
     {
-        m_matrix = glm::rotate(m_matrix, angleRad, glm::vec3(0, 0, 1));
+        m_rotation.z += angleRad;
+        rebuildMatrix();
     }
 
-    // scale
-    void scale(const glm::vec3& scale)
+    void scale(const glm::vec3& scl)
     {
-        m_matrix = glm::scale(m_matrix, scale); // m = m * S
+        m_scale *= scl;
+        rebuildMatrix();
     }
 
     void scale(const float factor)
     {
-        m_matrix = glm::scale(m_matrix, glm::vec3(factor));
-    }
-
-    // reset to specific absolute transform
-    void setPosition(const glm::vec3& pos)
-    {
-        m_matrix[3] = glm::vec4(pos, 1.0f);
-    }
-
-    // get position from transformation matrix
-    glm::vec3 getPosition() const
-    {
-        return glm::vec3(m_matrix[3]);
+        m_scale *= factor;
+        rebuildMatrix();
     }
 
     void setIdentity()
     {
+        m_position = glm::vec3(0.0f);
+        m_rotation = glm::vec3(0.0f);
+        m_scale = glm::vec3(1.0f);
         m_matrix = glm::mat4(1.0f);
     }
 
     // build from components
     void setFromComponents(const glm::vec3& pos, const glm::vec3& anglesRad, const glm::vec3& scl)
     {
-        glm::mat4 I(1.0f);
-        glm::mat4 T = glm::translate(I, pos);
-        glm::mat4 Rx = glm::rotate(I, anglesRad.x, glm::vec3(1,0,0));
-        glm::mat4 Ry = glm::rotate(I, anglesRad.y, glm::vec3(0,1,0));
-        glm::mat4 Rz = glm::rotate(I, anglesRad.z, glm::vec3(0,0,1));
-        glm::mat4 S  = glm::scale(I, scl);
-
-        // M = T * Rz * Ry * Rx * S or M = T * R * S
-        m_matrix = T * Rz * Ry * Rx * S;
+        m_position = pos;
+        m_rotation = anglesRad;
+        m_scale = scl;
+        rebuildMatrix();
     }
 
     // apply another transform
@@ -131,9 +181,10 @@ public:
         glm::quat q = glm::rotation(from, to);
         glm::mat4 R = glm::toMat4(q);
 
-        m_matrix[0] = glm::vec4(R[0].x, R[0].y, R[0].z, 0.0f);
-        m_matrix[1] = glm::vec4(R[1].x, R[1].y, R[1].z, 0.0f);
-        m_matrix[2] = glm::vec4(R[2].x, R[2].y, R[2].z, 0.0f);
+        // extract rotation as euler angles
+        glm::quat quat = glm::quat_cast(R);
+        m_rotation = glm::eulerAngles(quat);
+        rebuildMatrix();
     }
 
     // get rotation axes from matrix (x, y, z axes of local coordinate system)
@@ -145,7 +196,11 @@ public:
     }
 
 private:
+    glm::vec3 m_position;
+    glm::vec3 m_rotation;
+    glm::vec3 m_scale;
     glm::mat4 m_matrix;
+
     // Transform* m_parent{nullptr};
 };
 
