@@ -4,6 +4,8 @@
 
 #include "Camera.h"
 
+#include <GLFW/glfw3.h>
+
 namespace BulletRender {
 namespace scene {
 

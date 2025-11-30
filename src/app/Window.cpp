@@ -35,6 +35,8 @@ bool Window::init(const WindowConfig& cfg)
 
     glfwMakeContextCurrent(s_Window);
 
+    glfwSwapInterval(0); // 1 - vsync on, 0 - vsync off (unlimited fps)
+
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
     {
         std::cerr << "Failed to initialize GLAD\n";
