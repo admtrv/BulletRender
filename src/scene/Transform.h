@@ -15,7 +15,7 @@ namespace scene {
 // for now just wcs
 class Transform {
 public:
-    Transform() : m_position(0.0f), m_scale(1.0f), m_matrix(1.0f) {}
+    Transform() : m_position(0.0f), m_rotation(0.0f), m_scale(1.0f), m_matrix(1.0f) {}
 
     // rebuild matrix from components
     void rebuildMatrix()
@@ -97,20 +97,23 @@ public:
 
     void rotateX(const float angleRad)
     {
-        m_rotation.x += angleRad;
-        rebuildMatrix();
+        // rotate around world X axis
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angleRad, glm::vec3(1,0,0));
+        m_matrix = rotation * m_matrix;
     }
 
     void rotateY(const float angleRad)
     {
-        m_rotation.y += angleRad;
-        rebuildMatrix();
+        // rotate around world Y axis
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angleRad, glm::vec3(0,1,0));
+        m_matrix = rotation * m_matrix;
     }
 
     void rotateZ(const float angleRad)
     {
-        m_rotation.z += angleRad;
-        rebuildMatrix();
+        // rotate around world Z axis
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angleRad, glm::vec3(0,0,1));
+        m_matrix = rotation * m_matrix;
     }
 
     void scale(const glm::vec3& scl)

@@ -22,11 +22,6 @@ Loop::Loop(scene::Scene& scene) : m_scene(scene)
     ImGui_ImplOpenGL3_Init(config::GLSLVersion);
 }
 
-void Loop::setClearColor(const glm::vec4& color)
-{
-    m_clear = color;
-}
-
 void Loop::run(const std::function<void(float)>& update)
 {
     utils::FrameTimer timer;
@@ -53,7 +48,8 @@ void Loop::run(const std::function<void(float)>& update)
         render::Renderer::resizeViewport(fbw, fbh);
         m_scene.setAspect(fbh > 0 ? float(fbw) / float(fbh) : 1.0f);
 
-        render::Renderer::clear(m_clear.r, m_clear.g, m_clear.b, m_clear.a);
+        const glm::vec4& clearColor = render::Renderer::getConfig().backgroundColor;
+        render::Renderer::clear(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
         render::Renderer::render(m_scene);
 
         // render ImGui

@@ -3,16 +3,25 @@
  */
 
 #include "Renderer.h"
+#include "app/Window.h"
 
 namespace BulletRender {
 namespace render {
 
 std::vector<std::shared_ptr<IRenderPass>> Renderer::s_pre;
 std::vector<std::shared_ptr<IRenderPass>> Renderer::s_post;
+std::unique_ptr<FrameBuffer> Renderer::s_sceneFbo;
+RenderConfig Renderer::s_config;
 
-void Renderer::init()
+void Renderer::init(const RenderConfig& cfg)
 {
+    s_config = cfg;
     glEnable(GL_DEPTH_TEST);
+
+    // create framebuffer with current window size
+    int width, height;
+    app::Window::getSize(width, height);
+    s_sceneFbo = std::make_unique<FrameBuffer>(width, height);
 }
 
 void Renderer::clear(float r, float g, float b, float a)
@@ -24,6 +33,10 @@ void Renderer::clear(float r, float g, float b, float a)
 void Renderer::resizeViewport(int width, int height)
 {
     glViewport(0, 0, width, height);
+    if (s_sceneFbo)
+    {
+        s_sceneFbo->resize(width, height);
+    }
 }
 
 void Renderer::registerPrePass(std::shared_ptr<IRenderPass> pass)
@@ -38,6 +51,16 @@ void Renderer::registerPostPass(std::shared_ptr<IRenderPass> pass)
 
 void Renderer::render(const scene::Scene& scene)
 {
+    // render scene to framebuffer only if we have post-passes
+    bool useFramebuffer = !s_post.empty() && s_sceneFbo;
+
+    if (useFramebuffer)
+    {
+        s_sceneFbo->bind();
+        // clear framebuffer
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
     // PrePass
     for (auto& p : s_pre)
     {
@@ -47,10 +70,16 @@ void Renderer::render(const scene::Scene& scene)
     // BasePass
     renderBasePass(scene);
 
-    // PostPass
-    for (auto& p : s_post)
+    // unbind framebuffer
+    if (useFramebuffer)
     {
-        p->render(scene);
+        s_sceneFbo->unbind();
+
+        // PostPass
+        for (auto& p : s_post)
+        {
+            p->render(scene);
+        }
     }
 }
 

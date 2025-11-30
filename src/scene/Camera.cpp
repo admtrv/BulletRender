@@ -7,6 +7,20 @@
 namespace BulletRender {
 namespace scene {
 
+// StaticCamera
+
+glm::mat4 StaticCamera::view() const
+{
+    return glm::lookAt(m_pos, m_target, m_up);
+}
+
+glm::mat4 StaticCamera::proj(float aspect) const
+{
+    return glm::perspective(glm::radians(m_fovDeg), aspect, m_zNear, m_zFar);
+}
+
+// FlyCamera
+
 FlyCamera::FlyCamera(glm::vec3 pos,
         float yaw,
         float pitch,

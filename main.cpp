@@ -7,6 +7,7 @@
 #include "render/passes/WorldAxis.h"
 #include "render/passes/Grid.h"
 #include "render/passes/Lines.h"
+#include "render/passes/Fog.h"
 #include "render/Renderer.h"
 #include "render/Shader.h"
 #include "scene/Scene.h"
@@ -26,7 +27,8 @@ int main()
     }
 
     // renderer
-    render::Renderer::init();
+    render::RenderConfig renderCfg{{0.05f, 0.05f, 0.08f, 1.0f}};
+    render::Renderer::init(renderCfg);
 
     // grid
     auto grid = std::make_shared<render::Grid>();
@@ -55,6 +57,10 @@ int main()
 
     scene::DirectionalLight light;
     scene.setLight(&light);
+
+    // fog
+    auto fog = std::make_shared<render::Fog>(true, 10.0f, 90.0f);
+    render::Renderer::registerPostPass(fog);
 
     scene::SceneObject* object = scene.addObject(&model);
     object->getMaterial().setShader(shader);

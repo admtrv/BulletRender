@@ -30,6 +30,7 @@ public:
     void setMat4(const char* name, const glm::mat4& mat) const;
     void setVec3(const char* name, const glm::vec3& vec) const;
     void setFloat(const char* name, float vec) const;
+    void setInt(const char* name, int val) const;
 
 private:
     unsigned m_id = 0;

@@ -28,26 +28,35 @@ public:
 
     virtual float near() const = 0;
     virtual float far() const = 0;
+    virtual glm::vec3 position() const = 0;
 
     virtual void update(GLFWwindow* win, float dt) {}
 };
 
-// static camera (fixed view/proj)
+// static camera (position ->->-> target)
 class StaticCamera : public Camera {
 public:
-    StaticCamera(const glm::mat4& v, const glm::mat4& p, float zNear = 0.1f, float zFar = 100.0f)
-        : m_view(v), m_proj(p), m_zNear(zNear), m_zFar(zFar) {}
+    StaticCamera(const glm::vec3& pos,
+            const glm::vec3& target,
+            const glm::vec3& up = {0.0f, 1.0f, 0.0f},
+            float fovDeg = 60.0f,
+            float zNear = 0.1f,
+            float zFar = 100.0f)
+        : m_pos(pos), m_target(target), m_up(up), m_fovDeg(fovDeg), m_zNear(zNear), m_zFar(zFar)
+    {}
 
-    glm::mat4 view() const override { return m_view; }
-    glm::mat4 proj(float) const override { return m_proj; }
+    glm::mat4 view() const override;
+    glm::mat4 proj(float aspect) const override;
 
     float near() const override { return m_zNear; }
     float far()  const override { return m_zFar; }
+    glm::vec3 position() const override { return m_pos; }
 
 private:
-    glm::mat4 m_view;
-    glm::mat4 m_proj;
-
+    glm::vec3 m_pos;
+    glm::vec3 m_target;
+    glm::vec3 m_up;
+    float m_fovDeg;
     float m_zNear;
     float m_zFar;
 };
@@ -70,6 +79,7 @@ public:
 
     float near() const override { return m_zNear; }
     float far()  const override { return m_zFar; }
+    glm::vec3 position() const override { return m_pos; }
 
     void update(GLFWwindow* win, float dt) override;
 
