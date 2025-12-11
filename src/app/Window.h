@@ -20,9 +20,10 @@ struct WindowConfig {
     int height;
     std::string title;
     bool resizable;
+    bool vsync;         // 1 - vsync on, 0 - vsync off (unlimited fps)
 
-    explicit WindowConfig(int w = 800, int h = 600, std::string t = "BulletRender", bool r = true)
-        : width(w), height(h), title(std::move(t)), resizable(r) {}
+    explicit WindowConfig(int w = 800, int h = 600, std::string t = "BulletRender", bool r = true, bool v = false)
+        : width(w), height(h), title(std::move(t)), resizable(r), vsync(v) {}
 };
 
 class Window {

@@ -35,7 +35,7 @@ bool Window::init(const WindowConfig& cfg)
 
     glfwMakeContextCurrent(s_Window);
 
-    glfwSwapInterval(0); // 1 - vsync on, 0 - vsync off (unlimited fps)
+    glfwSwapInterval(cfg.vsync ? 1 : 0);
 
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
     {

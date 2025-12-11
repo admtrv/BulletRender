@@ -20,7 +20,7 @@ using namespace BulletRender;
 int main()
 {
     // window
-    app::WindowConfig windowCfg{800, 600, "Demo", true};
+    app::WindowConfig windowCfg{800, 600, "Demo", true, true};
     if (!app::Window::init(windowCfg))
     {
         return -1;

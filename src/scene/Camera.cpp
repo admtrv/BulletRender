@@ -134,10 +134,19 @@ void FlyCamera::update(GLFWwindow* win, float dt)
     }
 
     // camera rotation
+    if (m_mode == CursorMode::Locked)
     {
         double x;
         double y;
         glfwGetCursorPos(win, &x, &y);
+
+        if (!m_mouseInit)
+        {
+            m_lastX = x;
+            m_lastY = y;
+            m_mouseInit = true;
+        }
+
         const double dx = x - m_lastX;
         const double dy = m_lastY - y;
         m_lastX = x;
