@@ -29,6 +29,9 @@ public:
     // hooks
     void setBeforeFrame(std::function<void()> callback) { m_beforeFrame = std::move(callback); }
 
+    // panels dock to each other, off by default
+    static void setDocking(bool enabled) { s_docking = enabled; }
+
     // zero means unlimited
     static void setFrameRateLimit(int fps) { s_frameRateLimit = fps; }
     static int getFrameRateLimit() { return s_frameRateLimit; }
@@ -39,6 +42,7 @@ private:
     scene::Scene& m_scene;
     std::function<void()> m_beforeFrame;
     static int s_frameRateLimit;
+    static bool s_docking;
 };
 
 } // namespace app

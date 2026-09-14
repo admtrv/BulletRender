@@ -10,6 +10,8 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <cmath>
+
 namespace BulletRender {
 namespace render {
 
@@ -273,6 +275,30 @@ void DebugDraw::drawSphere(const glm::vec3& center, float radius, const glm::qua
         const glm::vec3 normal(glm::cos(angle), 0.0f, glm::sin(angle));
 
         drawCircle(center, orientation * normal, radius, color, CIRCLE_SEGMENTS);
+    }
+}
+
+// a plane has no edges, a hatched patch of it says where it lies
+void DebugDraw::drawPlane(const glm::vec3& point, const glm::vec3& normal, float radius, const glm::vec3& color, int stripes)
+{
+    const glm::vec3 axis = glm::normalize(normal);
+    const glm::vec3 right = anyPerpendicular(axis);
+    const glm::vec3 up = glm::normalize(glm::cross(axis, right));
+
+    // diagonal strokes clipped to a circle, each one is a chord at its own distance from the centre
+    const glm::vec3 along = glm::normalize(right + up) * radius;
+    const glm::vec3 across = glm::normalize(up - right) * radius;
+
+    // strokes sit half a step off the centre, so none of them degenerates at the rim
+    const float step = 2.0f / float(stripes);
+
+    for (int i = 0; i < stripes; i++)
+    {
+        const float offset = (float(i) + 0.5f) * step - 1.0f;
+        const float half = std::sqrt(1.0f - offset * offset);
+
+        m_lines->addLine(point + across * offset - along * half,
+                         point + across * offset + along * half, color);
     }
 }
 

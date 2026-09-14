@@ -26,8 +26,10 @@ list(FILTER SOURCES EXCLUDE REGEX ".*/.*build.*/.*")
 list(FILTER SOURCES EXCLUDE REGEX ".*/main\\.cpp$")
 list(FILTER SOURCES EXCLUDE REGEX ".*/external/.*")
 
-# editor interface belongs to standalone tool
-file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/interface/*.cpp")
+# editor screens belong to standalone tool
+file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/interface/screens/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/interface/Editor.cpp")
 list(REMOVE_ITEM SOURCES ${EDITOR_SOURCES})
 
 # render library
@@ -47,8 +49,9 @@ add_library(imgui STATIC
     ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+    ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
 )
-target_include_directories(imgui PUBLIC ${IMGUI_DIR})
+target_include_directories(imgui PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/misc/cpp)
 target_link_libraries(${LIB_NAME} PUBLIC imgui)
 
 # GLAD

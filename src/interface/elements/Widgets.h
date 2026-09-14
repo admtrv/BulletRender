@@ -11,6 +11,10 @@
 #include <string>
 
 namespace BulletRender {
+
+// fwd
+namespace render { class Material; }
+
 namespace interface {
 
 // every row starts with caption of fixed width, so panels read like table:
@@ -40,6 +44,8 @@ bool checkboxField(const char* label, bool& value);
 bool dragScalarField(const char* label, float& value, float min, float max, const char* format);
 bool dragScalarField(const char* label, int& value, int min, int max, const char* format);
 bool inputTextField(const char* label, char* buffer, size_t size, const char* hint = nullptr);
+bool textField(const char* label, std::string& value, const char* hint = nullptr);   // same, through a std::string
+bool comboField(const char* label, int& value, const char* const* options, int count);
 
 // vertical, three components need whole row:
 //
@@ -52,6 +58,40 @@ bool dragColor3(const char* label, glm::vec3& color);                   // same 
 // same controls without caption, for rows that drew their own
 bool dragScalarBare(float& value, float min, float max, const char* format);
 bool dragColor3Bare(glm::vec3& color);
+
+// menus
+
+// right click menu, body draws the items
+template <typename Body>
+void contextMenu(const char* id, Body body)
+{
+    if (ImGui::BeginPopupContextItem(id))
+    {
+        body();
+        ImGui::EndPopup();
+    }
+}
+
+// same, opened by right click anywhere in the window background
+template <typename Body>
+void windowContextMenu(const char* id, Body body)
+{
+    if (ImGui::BeginPopupContextWindow(id, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+    {
+        body();
+        ImGui::EndPopup();
+    }
+}
+
+// texture slots of a material, with previews and a load field
+inline constexpr size_t TEXTURE_PATH_LENGTH = 256;
+
+struct TextureFieldState {
+    char path[TEXTURE_PATH_LENGTH] = "";
+    std::string error;
+};
+
+void materialTextures(const char* id, render::Material& material, TextureFieldState& state);
 
 // composite
 void splitter(const char* id, float& fraction, float minFraction, float maxFraction);   // draggable gap between panes

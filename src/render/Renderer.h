@@ -47,14 +47,21 @@ public:
     static void clear(float r, float g, float b, float a);
     static void render(const scene::Scene& scene);
     static void resizeViewport(int width, int height);
+    static void shutdown();     // gl objects it owns must go before the context does
 
     static void registerPrePass(std::shared_ptr<IRenderPass> pass);
     static void registerOverlayPass(std::shared_ptr<IRenderPass> pass);     // on the final image, untouched by post-passes
     static void registerPostPass(std::shared_ptr<IRenderPass> pass);
 
     static FrameBuffer* getSceneFrameBuffer() { return s_sceneFbo.get(); }
+
     static const RenderConfig& getConfig() { return s_config; }
     static void setBackgroundColor(const glm::vec4& color) { s_config.backgroundColor = color; }
+
+    // offscreen, the frame stays in a texture instead of reaching the screen
+    static void setOffscreen(bool enabled) { s_offscreen = enabled; }
+    static FrameBuffer* getOffscreenFrameBuffer() { return s_offscreenFbo.get(); }
+    static void setOffscreenSize(int width, int height);
 
     static float getAspect();
 
@@ -68,6 +75,8 @@ private:
     static std::vector<std::shared_ptr<IRenderPass>> s_post;
 
     static std::unique_ptr<FrameBuffer> s_sceneFbo;
+    static std::unique_ptr<FrameBuffer> s_offscreenFbo;
+    static bool s_offscreen;
     static std::unique_ptr<DepthFrameBuffer> s_dirShadowFbo;
     static std::vector<std::unique_ptr<DepthFrameBuffer>> s_spotShadowFbos;
     static std::shared_ptr<GraphicsShader> s_shadowShader;

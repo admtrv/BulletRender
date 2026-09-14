@@ -7,6 +7,8 @@
 namespace BulletRender {
 namespace render {
 
+unsigned FrameBuffer::s_defaultTarget = 0;
+
 FrameBuffer::FrameBuffer(int width, int height) : m_width(width), m_height(height) {
     create();
 }
@@ -76,7 +78,7 @@ void FrameBuffer::bind()
 
 void FrameBuffer::unbind()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, s_defaultTarget);
 }
 
 void FrameBuffer::resize(int width, int height)

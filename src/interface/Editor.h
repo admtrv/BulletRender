@@ -5,6 +5,7 @@
 #pragma once
 
 #include "interface/elements/TreeView.h"
+#include "interface/elements/Widgets.h"
 #include "Config.h"
 #include "render/DebugDraw.h"
 #include "render/passes/Fog.h"
@@ -112,8 +113,7 @@ private:
     // file loading, path survives between frames
     char m_modelPath[256] = "";
     std::string m_modelError;
-    char m_texturePath[256] = "";
-    std::string m_textureError;
+    TextureFieldState m_textureField;
 
     // panel
     float m_panelWidth = 340.0f;

@@ -6,12 +6,9 @@
 
 #include "interface/elements/Widgets.h"
 #include "Colors.h"
-#include "render/textures/TextureLoader.h"
 #include "scene/models/ModelLoader.h"
 
 #include "imgui.h"
-
-#include <cstdio>
 
 namespace BulletRender {
 namespace interface {
@@ -41,11 +38,6 @@ constexpr float ORBIT_RADIUS_MAXIMUM = 200.0f;
 constexpr float SHININESS_MINIMUM = 1.0f;
 constexpr float SHININESS_MAXIMUM = 256.0f;
 
-// texture
-constexpr float TEXTURE_PREVIEW_SIZE = 48.0f;
-constexpr const char* ALBEDO_UNIFORM = "uAlbedo";   // only slot standard shader samples
-constexpr unsigned ALBEDO_UNIT = 0;
-
 // type names, indexed by matching enum
 static const char* const LIGHT_TYPE_NAMES[] = {"Ambient", "Directional", "Point", "Spot"};
 static const char* const CAMERA_TYPE_NAMES[] = {"Static", "Fly", "Orbit"};
@@ -63,12 +55,11 @@ static const char* cameraTypeName(scene::CameraType type)
 // editable display name, every entity has one
 static void nameField(scene::Named& named)
 {
-    char buffer[64];
-    std::snprintf(buffer, sizeof(buffer), "%s", named.getName().c_str());
+    std::string name = named.getName();
 
-    if (inputTextField("Name", buffer, sizeof(buffer)))
+    if (textField("Name", name))
     {
-        named.setName(buffer);
+        named.setName(name);
     }
 }
 
@@ -436,6 +427,8 @@ void Editor::drawModelInspector(scene::SceneObject& object)
         ImGui::TextDisabled("No model");
     }
 
+    ImGui::TextUnformatted("Load from file");
+
     if (loadFromFileField("model", m_modelPath, sizeof(m_modelPath), "path/to/model"))
     {
         // loaded geometry joins scene and goes to selected object
@@ -503,63 +496,7 @@ void Editor::drawTextureInspector(render::Material& material)
         return;
     }
 
-    bool anyDrawn = false;
-
-    for (const render::TextureSlot& slot : material.getTextures())
-    {
-        if (!slot.texture)
-        {
-            continue;
-        }
-
-        anyDrawn = true;
-        ImGui::PushID(slot.uniformName.c_str());
-
-        // preview says what it is, uniform name means nothing to user
-        ImGui::Image(static_cast<ImTextureID>(slot.texture->id()),
-                     {TEXTURE_PREVIEW_SIZE, TEXTURE_PREVIEW_SIZE});
-        ImGui::SameLine();
-
-        // size and button share column beside thumbnail
-        ImGui::BeginGroup();
-        ImGui::Text("%d x %d", slot.texture->getWidth(), slot.texture->getHeight());
-
-        const bool remove = ImGui::Button("Remove");
-        ImGui::EndGroup();
-
-        ImGui::PopID();
-
-        if (remove)
-        {
-            material.clearTexture(slot.uniformName);
-            break;                  // the list just changed under us
-        }
-    }
-
-    // separator needs something above to separate from
-    if (anyDrawn)
-    {
-        ImGui::Separator();
-    }
-    else
-    {
-        ImGui::TextDisabled("No textures");
-    }
-
-    if (loadFromFileField("texture", m_texturePath, sizeof(m_texturePath), "path/to/texture"))
-    {
-        if (auto texture = render::TextureLoader::instance().load(m_texturePath))
-        {
-            material.setTexture(ALBEDO_UNIFORM, texture, ALBEDO_UNIT);
-            m_textureError.clear();
-        }
-        else
-        {
-            m_textureError = "failed to load " + std::string(m_texturePath);
-        }
-    }
-
-    errorText(m_textureError);
+    materialTextures("material", material, m_textureField);
 }
 
 } // namespace interface

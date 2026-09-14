@@ -32,6 +32,9 @@ public:
 
     void reset() { m_levels.clear(); }
 
+    // guides run at the top level too, as if branching from the panel
+    void setRootless(bool rootless) { m_rootless = rootless; }
+
 private:
     std::string prefix(bool last) const;
 
@@ -43,6 +46,7 @@ private:
 
     std::vector<bool> m_levels;
     bool m_toggled = false;
+    bool m_rootless = false;
 };
 
 } // namespace interface

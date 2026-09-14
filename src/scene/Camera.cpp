@@ -116,16 +116,16 @@ void FlyCamera::update(float dt)
         applyCursorMode();
     }
 
-    const bool togglePressed = app::Window::isKeyDown(utils::InputKey::F1);
+    // holding the right button flies, releasing it hands the cursor back
+    const bool holding = app::Window::isMouseDown(app::MouseButton::Right);
 
-    if (togglePressed && !m_prevTogglePressed)
+    if (holding != (m_mode == app::CursorMode::Captured))
     {
         toggleCursorMode();
     }
 
-    m_prevTogglePressed = togglePressed;
-
-    if (!app::Window::isHovered())
+    // a captured cursor leaves the window behind, the look must carry on regardless
+    if (!holding && !app::Window::isHovered())
     {
         m_mouseInit = false;
         return;

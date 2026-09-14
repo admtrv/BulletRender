@@ -45,8 +45,7 @@ public:
     void drawSphere(const glm::vec3& center, float radius, const glm::quat& orientation, const glm::vec3& color);
     void drawArrow(const glm::vec3& from, const glm::vec3& to, const glm::vec3& color);
     void drawCone(const glm::vec3& apex, const glm::vec3& direction, float length, float angleRad, const glm::vec3& color);
-
-private:
+    void drawPlane(const glm::vec3& point, const glm::vec3& normal, float radius, const glm::vec3& color, int stripes = 9);
 
     // gizmos
 
@@ -59,6 +58,7 @@ private:
     void drawPointLight(const scene::PointLight& light);
     void drawSpotLight(const scene::SpotLight& light);
 
+private:
     std::shared_ptr<Lines> m_lines;
 
     bool m_showTransforms = true;

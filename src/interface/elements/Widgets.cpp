@@ -6,6 +6,10 @@
 
 #include "Colors.h"
 #include "Config.h"
+#include "render/Material.h"
+#include "render/textures/TextureLoader.h"
+
+#include "imgui_stdlib.h"
 
 #include <algorithm>
 #include <cstdarg>
@@ -17,6 +21,10 @@ constexpr float TAG_BRIGHTNESS = 1.6f;          // palette tuned for 3d view, ta
 constexpr float COLOR_DRAG_SPEED = 0.005f;      // channels live in 0..1, steps must be small
 constexpr float SPLITTER_THICKNESS = 6.0f;      // hit area, drawn line is thinner
 constexpr float DRAG_RANGE_FRACTION = 0.002f;   // drag speed as share of range, keeps fields feeling alike
+
+constexpr float TEXTURE_PREVIEW_SIZE = 48.0f;
+constexpr const char* ALBEDO_UNIFORM = "uAlbedo";   // only slot standard shader samples
+constexpr unsigned ALBEDO_UNIT = 0;
 
 // wide enough for longest caption, scaled with ui font
 float LABEL_COLUMN_WIDTH = LABEL_COLUMN_BASE * config::FontScale;
@@ -170,6 +178,72 @@ bool dragColor3Bare(glm::vec3& color)
     return changed;
 }
 
+void materialTextures(const char* id, render::Material& material, TextureFieldState& state)
+{
+    ImGui::PushID(id);
+
+    bool anyDrawn = false;
+
+    for (const render::TextureSlot& slot : material.getTextures())
+    {
+        if (!slot.texture)
+        {
+            continue;
+        }
+
+        anyDrawn = true;
+        ImGui::PushID(slot.uniformName.c_str());
+
+        // preview says what it is, uniform name means nothing to user
+        ImGui::Image(static_cast<ImTextureID>(slot.texture->id()), {TEXTURE_PREVIEW_SIZE, TEXTURE_PREVIEW_SIZE});
+        ImGui::SameLine();
+
+        // size and button share column beside thumbnail
+        ImGui::BeginGroup();
+        ImGui::Text("%d x %d", slot.texture->getWidth(), slot.texture->getHeight());
+
+        const bool remove = ImGui::Button("Remove");
+        ImGui::EndGroup();
+
+        ImGui::PopID();
+
+        if (remove)
+        {
+            material.clearTexture(slot.uniformName);
+            break;                  // the list just changed under us
+        }
+    }
+
+    // separator needs something above to separate from
+    if (anyDrawn)
+    {
+        ImGui::Separator();
+    }
+    else
+    {
+        ImGui::TextDisabled("No textures");
+    }
+
+    ImGui::TextUnformatted("Load from file");
+
+    if (loadFromFileField("texture", state.path, sizeof(state.path), "path/to/texture"))
+    {
+        if (auto texture = render::TextureLoader::instance().load(state.path))
+        {
+            material.setTexture(ALBEDO_UNIFORM, texture, ALBEDO_UNIT);
+            state.error.clear();
+        }
+        else
+        {
+            state.error = "failed to load " + std::string(state.path);
+        }
+    }
+
+    errorText(state.error);
+
+    ImGui::PopID();
+}
+
 void splitter(const char* id, float& fraction, float minFraction, float maxFraction)
 {
     const float available = ImGui::GetContentRegionAvail().y;
@@ -199,7 +273,6 @@ void splitter(const char* id, float& fraction, float minFraction, float maxFract
 bool loadFromFileField(const char* id, char* path, size_t size, const char* hint)
 {
     ImGui::PushID(id);
-    ImGui::TextUnformatted("Load from file");
 
     // button keeps natural width, field takes rest of row
     const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
@@ -263,6 +336,47 @@ bool inputTextField(const char* label, char* buffer, size_t size, const char* hi
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
     const bool changed = hint != nullptr ? ImGui::InputTextWithHint("##value", hint, buffer, size)
                                          : ImGui::InputText("##value", buffer, size);
+
+    ImGui::PopID();
+    return changed;
+}
+
+bool textField(const char* label, std::string& value, const char* hint)
+{
+    ImGui::PushID(label);
+    fieldLabel(label);
+
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    const bool changed = hint != nullptr ? ImGui::InputTextWithHint("##value", hint, &value)
+                                         : ImGui::InputText("##value", &value);
+
+    ImGui::PopID();
+    return changed;
+}
+
+bool comboField(const char* label, int& value, const char* const* options, int count)
+{
+    ImGui::PushID(label);
+    fieldLabel(label);
+
+    const char* current = (value >= 0 && value < count) ? options[value] : "";
+
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    bool changed = false;
+
+    if (ImGui::BeginCombo("##value", current))
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (ImGui::Selectable(options[i], i == value))
+            {
+                value = i;
+                changed = true;
+            }
+        }
+
+        ImGui::EndCombo();
+    }
 
     ImGui::PopID();
     return changed;

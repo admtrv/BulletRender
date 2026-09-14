@@ -14,7 +14,7 @@ namespace BulletRender {
 namespace render {
 
 struct TextureLoadOptions {
-    bool sRGB = true;
+    bool sRGB = false;      // pipeline stays in srgb, decoding would darken the texture
     bool generateMipmaps = true;
     bool flipVertically = false;
     SamplerConfig sampler{};

@@ -11,6 +11,7 @@ namespace BulletRender {
 namespace app {
 
 int Loop::s_frameRateLimit = 0;
+bool Loop::s_docking = false;
 
 void Loop::waitForFrameLimit(double frameStart)
 {
@@ -36,6 +37,11 @@ Loop::Loop(scene::Scene& scene) : m_scene(scene)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    if (s_docking)
+    {
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    }
 
     ImGui::StyleColorsDark();
 

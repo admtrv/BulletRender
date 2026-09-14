@@ -31,8 +31,8 @@ bool TreeView::row(const void* id, const char* label, bool last, bool selected, 
     // names may repeat, addresses never collide
     ImGui::PushID(id);
 
-    // top level rows have nothing above, branch would point at nothing
-    if (!m_levels.empty())
+    // top level rows branch off nothing, unless the tree is rootless
+    if (!m_levels.empty() || m_rootless)
     {
         ImGui::TextUnformatted(prefix(last).c_str());
         ImGui::SameLine(0.0f, 0.0f);

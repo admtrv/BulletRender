@@ -12,6 +12,8 @@ std::vector<std::shared_ptr<IRenderPass>> Renderer::s_pre;
 std::vector<std::shared_ptr<IRenderPass>> Renderer::s_overlay;
 std::vector<std::shared_ptr<IRenderPass>> Renderer::s_post;
 std::unique_ptr<FrameBuffer> Renderer::s_sceneFbo;
+std::unique_ptr<FrameBuffer> Renderer::s_offscreenFbo;
+bool Renderer::s_offscreen = false;
 std::unique_ptr<DepthFrameBuffer> Renderer::s_dirShadowFbo;
 std::vector<std::unique_ptr<DepthFrameBuffer>> Renderer::s_spotShadowFbos;
 std::shared_ptr<GraphicsShader> Renderer::s_shadowShader;
@@ -164,13 +166,51 @@ void Renderer::clear(float r, float g, float b, float a)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void Renderer::shutdown()
+{
+    s_pre.clear();
+    s_overlay.clear();
+    s_post.clear();
+
+    s_sceneFbo.reset();
+    s_offscreenFbo.reset();
+
+    s_dirShadowFbo.reset();
+    s_spotShadowFbos.clear();
+    s_shadowShader.reset();
+}
+
+void Renderer::setOffscreenSize(int width, int height)
+{
+    if (width <= 0 || height <= 0)
+    {
+        return;
+    }
+
+    if (s_offscreenFbo)
+    {
+        s_offscreenFbo->resize(width, height);
+    }
+    else
+    {
+        s_offscreenFbo = std::make_unique<FrameBuffer>(width, height);
+    }
+
+    // post passes resolve through the scene buffer, a smaller one would stretch
+    if (s_sceneFbo)
+    {
+        s_sceneFbo->resize(width, height);
+    }
+}
+
 void Renderer::resizeViewport(int width, int height)
 {
     s_viewportWidth = width;
     s_viewportHeight = height;
 
     glViewport(0, 0, width, height);
-    if (s_sceneFbo)
+    // offscreen owns the frame size then, window size would stretch the post pass
+    if (s_sceneFbo && !s_offscreen)
     {
         s_sceneFbo->resize(width, height);
     }
@@ -178,8 +218,17 @@ void Renderer::resizeViewport(int width, int height)
 
 float Renderer::getAspect()
 {
+    int width = s_viewportWidth;
+    int height = s_viewportHeight;
+
+    if (s_offscreen && s_offscreenFbo)
+    {
+        width = s_offscreenFbo->getWidth();
+        height = s_offscreenFbo->getHeight();
+    }
+
     // minimized window reports zero height, square keeps the projection finite
-    return s_viewportHeight > 0 ? float(s_viewportWidth) / float(s_viewportHeight) : 1.0f;
+    return height > 0 ? float(width) / float(height) : 1.0f;
 }
 
 void Renderer::registerPrePass(std::shared_ptr<IRenderPass> pass)
@@ -206,6 +255,17 @@ void Renderer::render(const scene::Scene& scene)
     int viewportW, viewportH;
     app::Window::getSize(viewportW, viewportH);
     glViewport(0, 0, viewportW, viewportH);
+
+    if (s_offscreen && s_offscreenFbo)
+    {
+        FrameBuffer::setDefaultTarget(s_offscreenFbo->getId());
+        s_offscreenFbo->bind();
+
+        viewportW = s_offscreenFbo->getWidth();
+        viewportH = s_offscreenFbo->getHeight();
+        glViewport(0, 0, viewportW, viewportH);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
 
     // inactive post-pass never resolves framebuffer, so scene goes straight to screen
     const bool hasActivePost = std::any_of(s_post.begin(), s_post.end(),
@@ -248,6 +308,12 @@ void Renderer::render(const scene::Scene& scene)
     for (auto& p : s_overlay)
     {
         p->render(scene);
+    }
+
+    if (s_offscreen && s_offscreenFbo)
+    {
+        FrameBuffer::setDefaultTarget(0);
+        s_offscreenFbo->unbind();
     }
 }
 

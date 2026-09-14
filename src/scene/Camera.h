@@ -94,7 +94,7 @@ private:
     float m_zFar;
 };
 
-// fly camera (Move: WASD, Camera: Mouse, Boost: Shift, Toggle Cursor: F1)
+// fly camera (Look: hold RMB, Move: WASD, Boost: Shift)
 class FlyCamera : public Camera {
 public:
     explicit FlyCamera(glm::vec3 pos = {0,1,5},
@@ -145,8 +145,6 @@ private:
     bool m_mouseInit;
     double m_lastX;
     double m_lastY;
-
-    bool m_prevTogglePressed = false;
 };
 
 // orbit camera (LMB drag = rotate, scroll = zoom)
