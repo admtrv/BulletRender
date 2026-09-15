@@ -95,7 +95,7 @@ void materialTextures(const char* id, render::Material& material, TextureFieldSt
 
 // composite
 void splitter(const char* id, float& fraction, float minFraction, float maxFraction);   // draggable gap between panes
-bool loadFromFileField(const char* id, char* path, size_t size, const char* hint);      // path with load button
+bool loadFromFileField(const char* id, char* path, size_t size, const char* hint, const char* dragType = nullptr);   // path with load button, drop target when a type is given
 
 // opt-in, toggle after caption greys out control until enabled:
 //

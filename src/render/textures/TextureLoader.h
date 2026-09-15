@@ -27,6 +27,7 @@ public:
 
     std::shared_ptr<Texture2D> load(const std::string& path, const TextureLoadOptions& opts = {});
 
+    void remove(const std::string& path);     // next load reads the file again
     void clear();
 
 private:

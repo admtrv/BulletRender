@@ -58,6 +58,9 @@ public:
     static const RenderConfig& getConfig() { return s_config; }
     static void setBackgroundColor(const glm::vec4& color) { s_config.backgroundColor = color; }
 
+    // what an object with no shader of its own is drawn with
+    static void setDefaultShader(std::shared_ptr<GraphicsShader> shader) { s_defaultShader = std::move(shader); }
+
     // offscreen, the frame stays in a texture instead of reaching the screen
     static void setOffscreen(bool enabled) { s_offscreen = enabled; }
     static FrameBuffer* getOffscreenFrameBuffer() { return s_offscreenFbo.get(); }
@@ -80,6 +83,7 @@ private:
     static std::unique_ptr<DepthFrameBuffer> s_dirShadowFbo;
     static std::vector<std::unique_ptr<DepthFrameBuffer>> s_spotShadowFbos;
     static std::shared_ptr<GraphicsShader> s_shadowShader;
+    static std::shared_ptr<GraphicsShader> s_defaultShader;
 
     static RenderConfig s_config;
 

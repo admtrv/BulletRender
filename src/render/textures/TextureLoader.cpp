@@ -37,6 +37,11 @@ std::shared_ptr<Texture2D> TextureLoader::load(const std::string& path, const Te
     return tex;
 }
 
+void TextureLoader::remove(const std::string& path)
+{
+    m_cache.erase(path);
+}
+
 void TextureLoader::clear()
 {
     m_cache.clear();

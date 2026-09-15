@@ -35,6 +35,11 @@ std::shared_ptr<Model> ModelLoader::load(const std::string& path)
     return model;
 }
 
+void ModelLoader::remove(const std::string& path)
+{
+    m_cache.erase(path);
+}
+
 void ModelLoader::clear()
 {
     m_cache.clear();

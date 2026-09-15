@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cstdarg>
+#include <cstdio>
 
 namespace BulletRender {
 namespace interface {
@@ -23,8 +24,6 @@ constexpr float SPLITTER_THICKNESS = 6.0f;      // hit area, drawn line is thinn
 constexpr float DRAG_RANGE_FRACTION = 0.002f;   // drag speed as share of range, keeps fields feeling alike
 
 constexpr float TEXTURE_PREVIEW_SIZE = 48.0f;
-constexpr const char* ALBEDO_UNIFORM = "uAlbedo";   // only slot standard shader samples
-constexpr unsigned ALBEDO_UNIT = 0;
 
 // wide enough for longest caption, scaled with ui font
 float LABEL_COLUMN_WIDTH = LABEL_COLUMN_BASE * config::FontScale;
@@ -76,7 +75,6 @@ static bool dragComponents(glm::vec3& value, const char* const names[3], const g
 
     return changed;
 }
-
 
 void fieldLabel(const char* label)
 {
@@ -230,7 +228,7 @@ void materialTextures(const char* id, render::Material& material, TextureFieldSt
     {
         if (auto texture = render::TextureLoader::instance().load(state.path))
         {
-            material.setTexture(ALBEDO_UNIFORM, texture, ALBEDO_UNIT);
+            material.setTexture(render::ALBEDO_UNIFORM, texture, render::ALBEDO_UNIT);
             state.error.clear();
         }
         else
@@ -270,7 +268,7 @@ void splitter(const char* id, float& fraction, float minFraction, float maxFract
                                         ImGui::GetColorU32(ImVec4{tint.r, tint.g, tint.b, 0.8f}), 1.0f);
 }
 
-bool loadFromFileField(const char* id, char* path, size_t size, const char* hint)
+bool loadFromFileField(const char* id, char* path, size_t size, const char* hint, const char* dragType)
 {
     ImGui::PushID(id);
 
@@ -281,11 +279,27 @@ bool loadFromFileField(const char* id, char* path, size_t size, const char* hint
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - buttonWidth - spacing);
     ImGui::InputTextWithHint("##path", hint, path, size);
 
+    // a dropped payload fills the field and loads at once, typing still needs the button
+    bool dropped = false;
+
+    if (dragType && ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(dragType))
+        {
+            const auto* text = static_cast<const char*>(payload->Data);
+
+            std::snprintf(path, size, "%s", text);
+            dropped = true;
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+
     ImGui::SameLine(0.0f, spacing);
     const bool pressed = ImGui::Button("Load");
 
     ImGui::PopID();
-    return pressed;
+    return pressed || dropped;
 }
 
 bool checkboxField(const char* label, bool& value)

@@ -20,6 +20,7 @@ public:
 
     std::shared_ptr<Model> load(const std::string& path);
 
+    void remove(const std::string& path);     // next load reads the file again
     void clear();
 
 private:

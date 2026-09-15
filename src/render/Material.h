@@ -23,6 +23,10 @@ struct TextureSlot {
     unsigned unit;
 };
 
+// the only slot the standard shader samples
+constexpr const char* ALBEDO_UNIFORM = "uAlbedo";
+constexpr unsigned ALBEDO_UNIT = 0;
+
 // material: shader + phong terms (kd, ks, ns, ke) + named texture slots
 class Material {
 public:

@@ -17,6 +17,7 @@ bool Renderer::s_offscreen = false;
 std::unique_ptr<DepthFrameBuffer> Renderer::s_dirShadowFbo;
 std::vector<std::unique_ptr<DepthFrameBuffer>> Renderer::s_spotShadowFbos;
 std::shared_ptr<GraphicsShader> Renderer::s_shadowShader;
+std::shared_ptr<GraphicsShader> Renderer::s_defaultShader;
 RenderConfig Renderer::s_config;
 int Renderer::s_viewportWidth = 1;
 int Renderer::s_viewportHeight = 1;
@@ -178,6 +179,7 @@ void Renderer::shutdown()
     s_dirShadowFbo.reset();
     s_spotShadowFbos.clear();
     s_shadowShader.reset();
+    s_defaultShader.reset();
 }
 
 void Renderer::setOffscreenSize(int width, int height)
@@ -480,12 +482,20 @@ void Renderer::renderBasePass(const scene::Scene& scene)
                 meshMaterial = model->getMaterials()[matId].get();
             }
 
-            // shader: object override has priority
+            // shader: object override > model material > default
             auto shader = objectMaterial.getShader();
+
             if (!shader && meshMaterial)
             {
                 shader = meshMaterial->getShader();
             }
+
+            if (!shader)
+            {
+                shader = s_defaultShader;
+            }
+
+            // nothing draws without one
             if (!shader)
             {
                 continue;
