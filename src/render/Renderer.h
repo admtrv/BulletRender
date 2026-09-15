@@ -46,6 +46,7 @@ public:
     static void init(const RenderConfig& cfg = RenderConfig());
     static void clear(float r, float g, float b, float a);
     static void render(const scene::Scene& scene);
+    static void renderTo(const scene::Scene& scene, FrameBuffer& target);   // same frame, into a texture of its own
     static void resizeViewport(int width, int height);
     static void shutdown();     // gl objects it owns must go before the context does
 
@@ -61,11 +62,6 @@ public:
     // what an object with no shader of its own is drawn with
     static void setDefaultShader(std::shared_ptr<GraphicsShader> shader) { s_defaultShader = std::move(shader); }
 
-    // offscreen, the frame stays in a texture instead of reaching the screen
-    static void setOffscreen(bool enabled) { s_offscreen = enabled; }
-    static FrameBuffer* getOffscreenFrameBuffer() { return s_offscreenFbo.get(); }
-    static void setOffscreenSize(int width, int height);
-
     static float getAspect();
 
 private:
@@ -78,12 +74,13 @@ private:
     static std::vector<std::shared_ptr<IRenderPass>> s_post;
 
     static std::unique_ptr<FrameBuffer> s_sceneFbo;
-    static std::unique_ptr<FrameBuffer> s_offscreenFbo;
-    static bool s_offscreen;
     static std::unique_ptr<DepthFrameBuffer> s_dirShadowFbo;
     static std::vector<std::unique_ptr<DepthFrameBuffer>> s_spotShadowFbos;
     static std::shared_ptr<GraphicsShader> s_shadowShader;
     static std::shared_ptr<GraphicsShader> s_defaultShader;
+
+    // where the frame is being drawn, the window when there is none
+    static FrameBuffer* s_target;
 
     static RenderConfig s_config;
 

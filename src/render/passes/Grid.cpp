@@ -12,7 +12,9 @@
 namespace BulletRender {
 namespace render {
 
-Grid::Grid(bool enabled) : m_enabled(enabled) {
+Grid::Grid(bool enabled) {
+    m_enabled = enabled;
+
     m_prog = std::make_shared<GraphicsShader>(VERT_PATH, FRAG_PATH);
     glGenVertexArrays(1, &m_Vao);
 }
@@ -26,7 +28,7 @@ Grid::~Grid() {
 
 void Grid::render(const scene::Scene& scene)
 {
-    if (!m_enabled || !m_prog)
+    if (!m_prog)
     {
         return;
     }

@@ -60,34 +60,34 @@ public:
     SceneObject* addObject(std::shared_ptr<Model> model, const std::string& name = "Object");
     void removeObject(size_t index);
     void clearObjects() { m_objects.clear(); }
-    const std::vector<std::unique_ptr<SceneObject>>& getObjects() const { return m_objects; }
+    const std::vector<std::shared_ptr<SceneObject>>& getObjects() const { return m_objects; }
 
     // light
     template <typename T, typename... Args>
     T* createLight(Args&&... args);
+    Light* addLight(std::shared_ptr<Light> light);      // shares one built elsewhere, as models are shared
     void removeLight(size_t index);
     void clearLights() { m_lights.clear(); }
-    const std::vector<std::unique_ptr<Light>>& getLights() const { return m_lights; }
+    const std::vector<std::shared_ptr<Light>>& getLights() const { return m_lights; }
 
     // camera, first one added becomes active unless told otherwise
     template <typename T, typename... Args>
     T* createCamera(Args&&... args);
     void removeCamera(size_t index);
     void clearCameras();
-    const std::vector<std::unique_ptr<Camera>>& getCameras() const { return m_cameras; }
+    const std::vector<std::shared_ptr<Camera>>& getCameras() const { return m_cameras; }
 
     // the one the frame is rendered through
     void setActiveCamera(Camera* camera);
     Camera* getActiveCamera() const { return m_activeCamera; }
 
 private:
-    Light* pushLight(std::unique_ptr<Light> light);
-    Camera* pushCamera(std::unique_ptr<Camera> camera);
+    Camera* pushCamera(std::shared_ptr<Camera> camera);
 
-    // scene owns objects, lights and cameras, editor creates and drops them at runtime
-    std::vector<std::unique_ptr<SceneObject>> m_objects;
-    std::vector<std::unique_ptr<Light>> m_lights;
-    std::vector<std::unique_ptr<Camera>> m_cameras;
+    // scene holds what it draws, sharing whatever was built elsewhere
+    std::vector<std::shared_ptr<SceneObject>> m_objects;
+    std::vector<std::shared_ptr<Light>> m_lights;
+    std::vector<std::shared_ptr<Camera>> m_cameras;
     Camera* m_activeCamera = nullptr;
 };
 
@@ -96,9 +96,9 @@ T* Scene::createLight(Args&&... args)
 {
     static_assert(std::is_base_of_v<Light, T>, "T must derive from Light");
 
-    auto light = std::make_unique<T>(std::forward<Args>(args)...);
+    auto light = std::make_shared<T>(std::forward<Args>(args)...);
     T* raw = light.get();
-    pushLight(std::move(light));
+    addLight(std::move(light));
     return raw;
 }
 
@@ -107,7 +107,7 @@ T* Scene::createCamera(Args&&... args)
 {
     static_assert(std::is_base_of_v<Camera, T>, "T must derive from Camera");
 
-    auto camera = std::make_unique<T>(std::forward<Args>(args)...);
+    auto camera = std::make_shared<T>(std::forward<Args>(args)...);
     T* raw = camera.get();
     pushCamera(std::move(camera));
     return raw;

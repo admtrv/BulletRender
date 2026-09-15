@@ -158,7 +158,7 @@ void Editor::drawFogSection()
         return;
     }
 
-    bool enabled = m_fog->isEnabled();
+    bool enabled = m_fog->isActive();
     if (checkboxField("Enable fog", enabled))
     {
         m_fog->setEnabled(enabled);

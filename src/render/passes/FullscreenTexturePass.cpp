@@ -16,7 +16,7 @@ FullscreenTexturePass::FullscreenTexturePass(std::shared_ptr<Texture2D> texture,
 
 void FullscreenTexturePass::render(const scene::Scene&)
 {
-    if (!m_enabled || !m_texture || !m_shader)
+    if (!m_texture || !m_shader)
     {
         return;
     }

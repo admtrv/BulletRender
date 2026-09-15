@@ -80,7 +80,7 @@ void DebugDraw::drawScene(const scene::Scene& scene)
 
     if (m_showLights)
     {
-        for (const std::unique_ptr<scene::Light>& light : scene.getLights())
+        for (const std::shared_ptr<scene::Light>& light : scene.getLights())
         {
             if (light && light->isVisible())
             {
@@ -92,7 +92,7 @@ void DebugDraw::drawScene(const scene::Scene& scene)
     if (m_showCameras)
     {
         // the active one is what we look through, its frustum surrounds the viewer
-        for (const std::unique_ptr<scene::Camera>& camera : scene.getCameras())
+        for (const std::shared_ptr<scene::Camera>& camera : scene.getCameras())
         {
             if (camera && camera.get() != scene.getActiveCamera())
             {
@@ -149,9 +149,7 @@ void DebugDraw::drawDirectionalLight(const scene::DirectionalLight& light)
 {
     // direction points towards the light, rays travel opposite way
     const glm::vec3 dir = -glm::normalize(light.getDirection());
-
-    // no position of its own, stand where shadow pass places its virtual camera
-    const glm::vec3 center = light.getShadowTarget() + light.getDirection() * light.getShadowOrthoSize() * 2.0f;
+    const glm::vec3 center = light.getPosition();
 
     const glm::vec3 right = anyPerpendicular(dir);
     const glm::vec3 up = glm::normalize(glm::cross(dir, right));
@@ -182,9 +180,14 @@ void DebugDraw::drawSpotLight(const scene::SpotLight& light)
 
 void DebugDraw::drawCamera(const scene::Camera& camera, float aspect)
 {
+    drawFrustum(camera.getView(), aspect);
+}
+
+void DebugDraw::drawFrustum(const glm::mat4& view, float aspect)
+{
     // real far plane stretch gizmo across scene, short frustum reads better
     const glm::mat4 proj = glm::perspective(glm::radians(CAMERA_FOV_DEG), aspect, CAMERA_NEAR, CAMERA_FAR);
-    const glm::mat4 invViewProj = glm::inverse(proj * camera.getView());
+    const glm::mat4 invViewProj = glm::inverse(proj * view);
 
     // unit cube in clip space back to world gives frustum corners
     glm::vec3 corners[8];

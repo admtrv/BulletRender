@@ -32,6 +32,9 @@ public:
     // panels dock to each other, off by default
     static void setDocking(bool enabled) { s_docking = enabled; }
 
+    // the loop draws the scene to the window, off when the caller draws it into its own targets
+    static void setDrawScene(bool enabled) { s_drawScene = enabled; }
+
     // zero means unlimited
     static void setFrameRateLimit(int fps) { s_frameRateLimit = fps; }
     static int getFrameRateLimit() { return s_frameRateLimit; }
@@ -43,6 +46,7 @@ private:
     std::function<void()> m_beforeFrame;
     static int s_frameRateLimit;
     static bool s_docking;
+    static bool s_drawScene;
 };
 
 } // namespace app

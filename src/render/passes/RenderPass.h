@@ -1,5 +1,5 @@
 /*
- * RenderPass.cpp
+ * RenderPass.h
  */
 
 #pragma once
@@ -17,7 +17,11 @@ public:
     virtual void render(const scene::Scene& scene) = 0;
 
     // disabled pass draws nothing, renderer can skip this work
-    virtual bool isActive() const { return true; }
+    virtual bool isActive() const { return m_enabled; }
+    void setEnabled(bool enabled) { m_enabled = enabled; }
+
+protected:
+    bool m_enabled = true;
 };
 
 } // namespace render

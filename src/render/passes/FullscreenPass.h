@@ -16,9 +16,6 @@ class FullscreenPass : public IRenderPass {
 public:
     ~FullscreenPass() override;
 
-    void setEnabled(bool enabled) { m_enabled = enabled; }
-    bool isEnabled() const { return m_enabled; }
-
 protected:
     FullscreenPass();
 
@@ -26,7 +23,6 @@ protected:
     void drawFullscreenTriangle();
 
     GLuint m_vao = 0;
-    bool m_enabled = true;
 };
 
 } // namespace render

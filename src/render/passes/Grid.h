@@ -21,14 +21,10 @@ public:
     explicit Grid(bool enabled = true);
     ~Grid();
 
-    void setEnabled(bool enabled) { m_enabled = enabled; }
-    bool isEnabled() const { return m_enabled; }
-
     void render(const scene::Scene& scene) override;
 
 private:
     std::shared_ptr<GraphicsShader> m_prog;
-    bool m_enabled = true;
     GLuint m_Vao = 0;
 };
 

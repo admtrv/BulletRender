@@ -61,7 +61,7 @@ void SkyBox::buildCube()
 
 void SkyBox::render(const scene::Scene& scene)
 {
-    if (!m_enabled || !m_cubemap || !m_shader)
+    if (!m_cubemap || !m_shader)
     {
         return;
     }

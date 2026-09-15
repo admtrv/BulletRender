@@ -4,7 +4,9 @@
 
 #include "Light.h"
 
+#include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace BulletRender {
 namespace scene {
@@ -13,6 +15,19 @@ namespace scene {
 constexpr float COLLINEAR_DOT = 0.999f;
 
 // Light
+
+void Light::setDirection(const glm::vec3& direction)
+{
+    const float length = glm::length(direction);
+
+    // a zero vector carries no direction, the previous rotation stays
+    if (length < glm::epsilon<float>())
+    {
+        return;
+    }
+
+    m_transform.setLocalRotation(glm::quatLookAt(direction / length, glm::vec3(0.0f, 1.0f, 0.0f)));
+}
 
 void Light::setColor(const glm::vec3& c)
 {
@@ -46,19 +61,10 @@ bool Light::getCastsShadow() const
 
 // DirectionalLight
 
-DirectionalLight::DirectionalLight(glm::vec3 dir) : Light("Directional Light"), m_direction(glm::normalize(dir))
+DirectionalLight::DirectionalLight(glm::vec3 dir) : Light("Directional Light")
 {
+    setDirection(dir);
     m_castsShadow = true;
-}
-
-void DirectionalLight::setDirection(const glm::vec3& d)
-{
-    m_direction = glm::normalize(d);
-}
-
-glm::vec3 DirectionalLight::getDirection() const
-{
-    return m_direction;
 }
 
 void DirectionalLight::setShadowOrthoSize(float halfSize)
@@ -85,10 +91,11 @@ glm::mat4 DirectionalLight::getViewProj() const
 {
     // place virtual camera back along the light direction, looking at the target
     float dist = m_orthoHalfSize * 2.0f;
-    glm::vec3 eye = m_shadowTarget + m_direction * dist;
+    const glm::vec3 direction = getDirection();
+    glm::vec3 eye = m_shadowTarget + direction * dist;
 
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    if (glm::abs(glm::dot(m_direction, up)) > COLLINEAR_DOT)
+    if (glm::abs(glm::dot(direction, up)) > COLLINEAR_DOT)
     {
         up = glm::vec3(0.0f, 0.0f, 1.0f);
     }
@@ -102,16 +109,9 @@ glm::mat4 DirectionalLight::getViewProj() const
 
 // PointLight
 
-PointLight::PointLight(glm::vec3 pos, float range) : Light("Point Light"), m_position(pos), m_range(range) {}
-
-void PointLight::setPosition(const glm::vec3& p)
+PointLight::PointLight(glm::vec3 pos, float range) : Light("Point Light"), m_range(range)
 {
-    m_position = p;
-}
-
-glm::vec3 PointLight::getPosition() const
-{
-    return m_position;
+    setPosition(pos);
 }
 
 void PointLight::setRange(float r)
@@ -128,33 +128,14 @@ float PointLight::getRange() const
 
 SpotLight::SpotLight(glm::vec3 pos, glm::vec3 dir, float innerDeg, float outerDeg, float range)
     : Light("Spot Light"),
-      m_position(pos),
-      m_direction(glm::normalize(dir)),
       m_innerCos(glm::cos(glm::radians(innerDeg))),
       m_outerCos(glm::cos(glm::radians(outerDeg))),
       m_range(range)
 {
+    setPosition(pos);
+    setDirection(dir);
+
     m_castsShadow = true;
-}
-
-void SpotLight::setPosition(const glm::vec3& p)
-{
-    m_position = p;
-}
-
-glm::vec3 SpotLight::getPosition() const
-{
-    return m_position;
-}
-
-void SpotLight::setDirection(const glm::vec3& d)
-{
-    m_direction = glm::normalize(d);
-}
-
-glm::vec3 SpotLight::getDirection() const
-{
-    return m_direction;
 }
 
 void SpotLight::setCones(float innerDeg, float outerDeg)
@@ -189,16 +170,16 @@ glm::mat4 SpotLight::getViewProj() const
     float outerAngle = glm::acos(glm::clamp(m_outerCos, -1.0f, 1.0f));
     float fov = outerAngle * 2.0f;
 
-    glm::vec3 eye = m_position;
-    glm::vec3 target = m_position + m_direction;
+    const glm::vec3 eye = getPosition();
+    const glm::vec3 direction = getDirection();
 
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    if (glm::abs(glm::dot(m_direction, up)) > COLLINEAR_DOT)
+    if (glm::abs(glm::dot(direction, up)) > COLLINEAR_DOT)
     {
         up = glm::vec3(0.0f, 0.0f, 1.0f);
     }
 
-    glm::mat4 view = glm::lookAt(eye, target, up);
+    glm::mat4 view = glm::lookAt(eye, eye + direction, up);
     glm::mat4 proj = glm::perspective(fov, 1.0f, 0.1f, m_range);
     return proj * view;
 }

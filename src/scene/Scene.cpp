@@ -47,7 +47,7 @@ std::vector<SceneObject*> SceneObject::getChildren() const
 
 SceneObject* Scene::addObject(std::shared_ptr<Model> model, const std::string& name)
 {
-    m_objects.emplace_back(std::make_unique<SceneObject>(std::move(model), name));
+    m_objects.emplace_back(std::make_shared<SceneObject>(std::move(model), name));
     SceneObject* object = m_objects.back().get();
     object->getTransform().setOwner(object);
     return object;
@@ -61,7 +61,7 @@ void Scene::removeObject(size_t index)
     }
 }
 
-Light* Scene::pushLight(std::unique_ptr<Light> light)
+Light* Scene::addLight(std::shared_ptr<Light> light)
 {
     Light* raw = light.get();
     m_lights.push_back(std::move(light));
@@ -76,7 +76,7 @@ void Scene::removeLight(size_t index)
     }
 }
 
-Camera* Scene::pushCamera(std::unique_ptr<Camera> camera)
+Camera* Scene::pushCamera(std::shared_ptr<Camera> camera)
 {
     Camera* raw = camera.get();
     m_cameras.push_back(std::move(camera));

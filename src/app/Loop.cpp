@@ -12,6 +12,7 @@ namespace app {
 
 int Loop::s_frameRateLimit = 0;
 bool Loop::s_docking = false;
+bool Loop::s_drawScene = true;
 
 void Loop::waitForFrameLimit(double frameStart)
 {
@@ -83,7 +84,11 @@ void Loop::run(const std::function<void(float)>& update)
 
         const glm::vec4& clearColor = render::Renderer::getConfig().backgroundColor;
         render::Renderer::clear(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-        render::Renderer::render(m_scene);
+
+        if (s_drawScene)
+        {
+            render::Renderer::render(m_scene);
+        }
 
         // render ImGui
         ImGui::Render();

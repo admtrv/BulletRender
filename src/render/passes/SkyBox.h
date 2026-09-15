@@ -27,9 +27,6 @@ public:
     void setCubeMap(std::shared_ptr<CubeMap> cm) { m_cubemap = std::move(cm); }
     std::shared_ptr<CubeMap> getCubeMap() const { return m_cubemap; }
 
-    void setEnabled(bool e) { m_enabled = e; }
-    bool isEnabled() const { return m_enabled; }
-
     void render(const scene::Scene& scene) override;
 
 private:
@@ -40,7 +37,6 @@ private:
 
     GLuint m_vao = 0;
     GLuint m_vbo = 0;
-    bool m_enabled = true;
 };
 
 } // namespace render

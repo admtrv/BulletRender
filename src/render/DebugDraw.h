@@ -52,6 +52,7 @@ public:
     void drawTransform(const scene::Transform& transform);                      // rgb axes
     void drawBounds(const scene::Model& model, const glm::mat4& matrix);        // model bounds
     void drawCamera(const scene::Camera& camera, float aspect);                 // view frustum
+    void drawFrustum(const glm::mat4& view, float aspect);                      // same, for a view that has no camera object
 
     void drawLight(const scene::Light& light);                          // depends on type
     void drawDirectionalLight(const scene::DirectionalLight& light);

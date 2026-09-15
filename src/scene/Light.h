@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Named.h"
+#include "Transform.h"
 
 #include <glm/glm.hpp>
 
@@ -25,6 +26,16 @@ public:
     virtual ~Light() = default;
     virtual LightType getType() const = 0;
 
+    // pose, a light stands and points the way its transform does
+    Transform& getTransform() { return m_transform; }
+    const Transform& getTransform() const { return m_transform; }
+
+    glm::vec3 getPosition() const { return m_transform.getPosition(); }
+    void setPosition(const glm::vec3& position) { m_transform.setLocalPosition(position); }
+
+    glm::vec3 getDirection() const { return m_transform.getForward(); }
+    void setDirection(const glm::vec3& direction);
+
     void setColor(const glm::vec3& c);
     glm::vec3 getColor() const;
 
@@ -38,6 +49,8 @@ public:
     bool isVisible() const { return m_visible; }
 
 protected:
+    Transform m_transform;
+
     glm::vec3 m_color = glm::vec3(1.0f);
     float m_intensity = 1.0f;
     bool m_castsShadow = false;
@@ -57,9 +70,6 @@ class DirectionalLight : public Light {
 public:
     explicit DirectionalLight(glm::vec3 dir = glm::vec3(-0.4f, 1.0f, 0.2f));
 
-    void setDirection(const glm::vec3& d);
-    glm::vec3 getDirection() const;
-
     // shadow frustum size and target for orthographic shadow projection
     void setShadowOrthoSize(float halfSize);
     float getShadowOrthoSize() const;
@@ -72,7 +82,6 @@ public:
     LightType getType() const override { return LightType::Directional; }
 
 private:
-    glm::vec3 m_direction;
     float m_orthoHalfSize = 15.0f;
     glm::vec3 m_shadowTarget = glm::vec3(0.0f);
 };
@@ -82,16 +91,12 @@ class PointLight : public Light {
 public:
     explicit PointLight(glm::vec3 pos = glm::vec3(0.0f), float range = 20.0f);
 
-    void setPosition(const glm::vec3& p);
-    glm::vec3 getPosition() const;
-
     void setRange(float r);
     float getRange() const;
 
     LightType getType() const override { return LightType::Point; }
 
 private:
-    glm::vec3 m_position;
     float m_range;
 };
 
@@ -103,12 +108,6 @@ public:
               float innerDeg = 15.0f,
               float outerDeg = 25.0f,
               float range = 30.0f);
-
-    void setPosition(const glm::vec3& p);
-    glm::vec3 getPosition() const;
-
-    void setDirection(const glm::vec3& d);
-    glm::vec3 getDirection() const;
 
     // angles stored as cosines
     void setCones(float innerDeg, float outerDeg);
@@ -123,8 +122,6 @@ public:
     LightType getType() const override { return LightType::Spot; }
 
 private:
-    glm::vec3 m_position;
-    glm::vec3 m_direction;
     float m_innerCos;
     float m_outerCos;
     float m_range;

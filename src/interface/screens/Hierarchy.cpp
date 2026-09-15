@@ -51,7 +51,7 @@ void Editor::drawHierarchy()
 
 void Editor::drawObjectSection()
 {
-    const std::vector<std::unique_ptr<scene::SceneObject>>& objects = m_scene.getObjects();
+    const std::vector<std::shared_ptr<scene::SceneObject>>& objects = m_scene.getObjects();
 
     // own tree, guides start fresh instead of hanging off shared root
     m_tree.reset();
@@ -104,7 +104,7 @@ void Editor::drawObjectSection()
 
 void Editor::drawLightSection()
 {
-    const std::vector<std::unique_ptr<scene::Light>>& lights = m_scene.getLights();
+    const std::vector<std::shared_ptr<scene::Light>>& lights = m_scene.getLights();
 
     m_tree.reset();
 
@@ -137,7 +137,7 @@ void Editor::drawLightSection()
 
 void Editor::drawCameraSection()
 {
-    const std::vector<std::unique_ptr<scene::Camera>>& cameras = m_scene.getCameras();
+    const std::vector<std::shared_ptr<scene::Camera>>& cameras = m_scene.getCameras();
 
     m_tree.reset();
 
@@ -175,7 +175,7 @@ void Editor::drawCameraSection()
 
 size_t Editor::indexOfObject(const scene::SceneObject* object) const
 {
-    const std::vector<std::unique_ptr<scene::SceneObject>>& objects = m_scene.getObjects();
+    const std::vector<std::shared_ptr<scene::SceneObject>>& objects = m_scene.getObjects();
     for (size_t i = 0; i < objects.size(); ++i)
     {
         if (objects[i].get() == object)

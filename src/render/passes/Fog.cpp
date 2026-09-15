@@ -9,7 +9,9 @@
 namespace BulletRender {
 namespace render {
 
-Fog::Fog(bool enabled, float start, float end) : m_enabled(enabled), m_fogStart(start), m_fogEnd(end) {
+Fog::Fog(bool enabled, float start, float end) : m_fogStart(start), m_fogEnd(end) {
+    m_enabled = enabled;
+
     m_prog = std::make_shared<GraphicsShader>(FOG_VERT_PATH, FOG_FRAG_PATH);
     glGenVertexArrays(1, &m_Vao);
 }
@@ -23,7 +25,7 @@ Fog::~Fog() {
 
 void Fog::render(const scene::Scene& scene)
 {
-    if (!m_enabled || !m_prog)
+    if (!m_prog)
     {
         return;
     }

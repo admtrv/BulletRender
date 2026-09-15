@@ -12,8 +12,7 @@ std::vector<std::shared_ptr<IRenderPass>> Renderer::s_pre;
 std::vector<std::shared_ptr<IRenderPass>> Renderer::s_overlay;
 std::vector<std::shared_ptr<IRenderPass>> Renderer::s_post;
 std::unique_ptr<FrameBuffer> Renderer::s_sceneFbo;
-std::unique_ptr<FrameBuffer> Renderer::s_offscreenFbo;
-bool Renderer::s_offscreen = false;
+FrameBuffer* Renderer::s_target = nullptr;
 std::unique_ptr<DepthFrameBuffer> Renderer::s_dirShadowFbo;
 std::vector<std::unique_ptr<DepthFrameBuffer>> Renderer::s_spotShadowFbos;
 std::shared_ptr<GraphicsShader> Renderer::s_shadowShader;
@@ -66,7 +65,7 @@ static LightUniforms collectLights(const scene::Scene& scene)
 {
     LightUniforms out;
 
-    for (const std::unique_ptr<scene::Light>& light : scene.getLights())
+    for (const std::shared_ptr<scene::Light>& light : scene.getLights())
     {
         if (!light || !light->isVisible()) continue;
 
@@ -174,35 +173,11 @@ void Renderer::shutdown()
     s_post.clear();
 
     s_sceneFbo.reset();
-    s_offscreenFbo.reset();
 
     s_dirShadowFbo.reset();
     s_spotShadowFbos.clear();
     s_shadowShader.reset();
     s_defaultShader.reset();
-}
-
-void Renderer::setOffscreenSize(int width, int height)
-{
-    if (width <= 0 || height <= 0)
-    {
-        return;
-    }
-
-    if (s_offscreenFbo)
-    {
-        s_offscreenFbo->resize(width, height);
-    }
-    else
-    {
-        s_offscreenFbo = std::make_unique<FrameBuffer>(width, height);
-    }
-
-    // post passes resolve through the scene buffer, a smaller one would stretch
-    if (s_sceneFbo)
-    {
-        s_sceneFbo->resize(width, height);
-    }
 }
 
 void Renderer::resizeViewport(int width, int height)
@@ -211,8 +186,8 @@ void Renderer::resizeViewport(int width, int height)
     s_viewportHeight = height;
 
     glViewport(0, 0, width, height);
-    // offscreen owns the frame size then, window size would stretch the post pass
-    if (s_sceneFbo && !s_offscreen)
+
+    if (s_sceneFbo)
     {
         s_sceneFbo->resize(width, height);
     }
@@ -223,10 +198,10 @@ float Renderer::getAspect()
     int width = s_viewportWidth;
     int height = s_viewportHeight;
 
-    if (s_offscreen && s_offscreenFbo)
+    if (s_target)
     {
-        width = s_offscreenFbo->getWidth();
-        height = s_offscreenFbo->getHeight();
+        width = s_target->getWidth();
+        height = s_target->getHeight();
     }
 
     // minimized window reports zero height, square keeps the projection finite
@@ -248,6 +223,30 @@ void Renderer::registerPostPass(std::shared_ptr<IRenderPass> pass)
     s_post.push_back(std::move(pass));
 }
 
+void Renderer::renderTo(const scene::Scene& scene, FrameBuffer& target)
+{
+    // the scene buffer resolves post passes, it has to match what is being drawn into
+    if (s_sceneFbo)
+    {
+        s_sceneFbo->resize(target.getWidth(), target.getHeight());
+    }
+
+    s_target = &target;
+
+    FrameBuffer::setDefaultTarget(target.getId());
+    target.bind();
+
+    glViewport(0, 0, target.getWidth(), target.getHeight());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    render(scene);
+
+    FrameBuffer::setDefaultTarget(0);
+    target.unbind();
+
+    s_target = nullptr;
+}
+
 void Renderer::render(const scene::Scene& scene)
 {
     // ShadowPass first, fills depth maps for shadow-casting lights
@@ -258,15 +257,12 @@ void Renderer::render(const scene::Scene& scene)
     app::Window::getSize(viewportW, viewportH);
     glViewport(0, 0, viewportW, viewportH);
 
-    if (s_offscreen && s_offscreenFbo)
+    // the caller bound a target, the frame is its size
+    if (s_target)
     {
-        FrameBuffer::setDefaultTarget(s_offscreenFbo->getId());
-        s_offscreenFbo->bind();
-
-        viewportW = s_offscreenFbo->getWidth();
-        viewportH = s_offscreenFbo->getHeight();
+        viewportW = s_target->getWidth();
+        viewportH = s_target->getHeight();
         glViewport(0, 0, viewportW, viewportH);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     // inactive post-pass never resolves framebuffer, so scene goes straight to screen
@@ -285,7 +281,10 @@ void Renderer::render(const scene::Scene& scene)
     // PrePass
     for (auto& p : s_pre)
     {
-        p->render(scene);
+        if (p->isActive())
+        {
+            p->render(scene);
+        }
     }
 
     // BasePass
@@ -309,13 +308,10 @@ void Renderer::render(const scene::Scene& scene)
     // OverlayPass
     for (auto& p : s_overlay)
     {
-        p->render(scene);
-    }
-
-    if (s_offscreen && s_offscreenFbo)
-    {
-        FrameBuffer::setDefaultTarget(0);
-        s_offscreenFbo->unbind();
+        if (p->isActive())
+        {
+            p->render(scene);
+        }
     }
 }
 

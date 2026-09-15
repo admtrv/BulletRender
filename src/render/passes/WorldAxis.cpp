@@ -15,8 +15,10 @@
 namespace BulletRender {
 namespace render {
 
-WorldAxis::WorldAxis(bool enabled) : m_enabled(enabled)
+WorldAxis::WorldAxis(bool enabled)
 {
+    m_enabled = enabled;
+
     m_prog = std::make_shared<GraphicsShader>(AXIS_VERT_PATH, AXIS_FRAG_PATH);
     glGenVertexArrays(1, &m_Vao);
 }
@@ -31,7 +33,7 @@ WorldAxis::~WorldAxis()
 
 void WorldAxis::render(const scene::Scene& scene)
 {
-    if (!m_enabled || !m_prog)
+    if (!m_prog)
     {
         return;
     }
