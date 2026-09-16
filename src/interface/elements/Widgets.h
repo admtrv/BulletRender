@@ -46,6 +46,7 @@ bool dragScalarField(const char* label, int& value, int min, int max, const char
 bool inputTextField(const char* label, char* buffer, size_t size, const char* hint = nullptr);
 bool textField(const char* label, std::string& value, const char* hint = nullptr);   // same, through a std::string
 bool comboField(const char* label, int& value, const char* const* options, int count);
+bool bitsField(const char* label, unsigned& value, int count);      // grid of checkboxes, one per bit
 
 // vertical, three components need whole row:
 //
@@ -53,6 +54,7 @@ bool comboField(const char* label, int& value, const char* const* options, int c
 // x 0.00   y 0.00   z 0.00
 
 bool dragVector3(const char* label, glm::vec3& value, float speed, float min, float max, const char* format);
+bool checkboxAxes(const char* label, bool& x, bool& y, bool& z);        // three toggles, one per axis
 bool dragColor3(const char* label, glm::vec3& color);                   // same plus swatch that opens picker
 
 // same controls without caption, for rows that drew their own

@@ -24,6 +24,8 @@ constexpr float SPLITTER_THICKNESS = 6.0f;      // hit area, drawn line is thinn
 constexpr float DRAG_RANGE_FRACTION = 0.002f;   // drag speed as share of range, keeps fields feeling alike
 
 constexpr float TEXTURE_PREVIEW_SIZE = 48.0f;
+constexpr int BITS_PER_ROW = 8;                 // mask splits into bytes, rows stay readable
+constexpr int AXIS_COUNT = 3;
 
 // wide enough for longest caption, scaled with ui font
 float LABEL_COLUMN_WIDTH = LABEL_COLUMN_BASE * config::FontScale;
@@ -112,6 +114,58 @@ bool dragVector3(const char* label, glm::vec3& value, float speed, float min, fl
 
     const bool changed = dragComponents(value, AXIS_NAMES, AXIS_COLORS, speed, min, max, format,
                                         ImGui::GetContentRegionAvail().x);
+
+    ImGui::PopID();
+    return changed;
+}
+
+bool checkboxAxes(const char* label, bool& x, bool& y, bool& z)
+{
+    static const char* const AXIS_NAMES[] = {"x", "y", "z"};
+    static const glm::vec3 AXIS_COLORS[] = {colors::AxisX, colors::AxisY, colors::AxisZ};
+
+    bool* const axes[] = {&x, &y, &z};
+
+    ImGui::PushID(label);
+    ImGui::TextUnformatted(label);
+
+    const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
+    const float cellWidth = (ImGui::GetContentRegionAvail().x - spacing * 2.0f) / 3.0f;
+
+    // widest tag sets offset for all three, columns line up with vector rows
+    float tagWidth = 0.0f;
+    for (const char* name : AXIS_NAMES)
+    {
+        tagWidth = std::max(tagWidth, ImGui::CalcTextSize(name).x);
+    }
+    tagWidth += spacing;
+
+    const float startX = ImGui::GetCursorPosX();
+
+    bool changed = false;
+
+    for (int axis = 0; axis < AXIS_COUNT; axis++)
+    {
+        ImGui::PushID(axis);
+
+        const float cellX = startX + static_cast<float>(axis) * (cellWidth + spacing);
+
+        ImGui::SetCursorPosX(cellX);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(tagColor(AXIS_COLORS[axis]), "%s", AXIS_NAMES[axis]);
+
+        ImGui::SameLine();
+        ImGui::SetCursorPosX(cellX + tagWidth);
+
+        changed |= ImGui::Checkbox("##axis", axes[axis]);
+
+        ImGui::PopID();
+
+        if (axis < AXIS_COUNT - 1)
+        {
+            ImGui::SameLine();
+        }
+    }
 
     ImGui::PopID();
     return changed;
@@ -390,6 +444,46 @@ bool comboField(const char* label, int& value, const char* const* options, int c
         }
 
         ImGui::EndCombo();
+    }
+
+    ImGui::PopID();
+    return changed;
+}
+
+bool bitsField(const char* label, unsigned& value, int count)
+{
+    ImGui::PushID(label);
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(label);
+
+    bool changed = false;
+
+    // rows of eight, bit zero top left
+    for (int bit = 0; bit < count; bit++)
+    {
+        if (bit % BITS_PER_ROW != 0)
+        {
+            ImGui::SameLine();
+        }
+
+        ImGui::PushID(bit);
+
+        const unsigned flag = 1u << bit;
+        bool set = (value & flag) != 0;
+
+        if (ImGui::Checkbox("##bit", &set))
+        {
+            value = set ? (value | flag) : (value & ~flag);
+            changed = true;
+        }
+
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip("%d", bit);
+        }
+
+        ImGui::PopID();
     }
 
     ImGui::PopID();
