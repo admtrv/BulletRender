@@ -5,6 +5,7 @@
 #include "Camera.h"
 
 #include "app/Window.h"
+#include "utils/Input.h"
 
 
 namespace BulletRender {
@@ -117,7 +118,7 @@ void FlyCamera::update(float dt)
     }
 
     // holding the right button flies, releasing it hands the cursor back
-    const bool holding = app::Window::isMouseDown(app::MouseButton::Right);
+    const bool holding = utils::Input::isMouseDown(utils::MouseButton::Right);
 
     if (holding != (m_mode == app::CursorMode::Captured))
     {
@@ -136,7 +137,7 @@ void FlyCamera::update(float dt)
     {
         double x;
         double y;
-        app::Window::getCursorPos(x, y);
+        utils::Input::getCursorPos(x, y);
 
         if (!m_mouseInit)
         {
@@ -176,22 +177,22 @@ void FlyCamera::update(float dt)
     const glm::vec3 fwd = forwardDir();
     const glm::vec3 right = glm::normalize(glm::cross(fwd, glm::vec3 WORLD_UP));
 
-    const bool boost = app::Window::isKeyDown(utils::InputKey::LEFT_SHIFT) || app::Window::isKeyDown(utils::InputKey::RIGHT_SHIFT);
+    const bool boost = utils::Input::isKeyDown(utils::InputKey::LEFT_SHIFT) || utils::Input::isKeyDown(utils::InputKey::RIGHT_SHIFT);
     const float step = m_speed * (boost ? 4.0f : 1.0f) * dt;
 
-    if (app::Window::isKeyDown(utils::InputKey::W))
+    if (utils::Input::isKeyDown(utils::InputKey::W))
     {
         m_pos += fwd   * step;
     }
-    if (app::Window::isKeyDown(utils::InputKey::S))
+    if (utils::Input::isKeyDown(utils::InputKey::S))
     {
         m_pos -= fwd   * step;
     }
-    if (app::Window::isKeyDown(utils::InputKey::A))
+    if (utils::Input::isKeyDown(utils::InputKey::A))
     {
         m_pos -= right * step;
     }
-    if (app::Window::isKeyDown(utils::InputKey::D))
+    if (utils::Input::isKeyDown(utils::InputKey::D))
     {
         m_pos += right * step;
     }
@@ -234,9 +235,9 @@ void OrbitCamera::update(float /*dt*/)
 {
     double x = 0.0;
     double y = 0.0;
-    app::Window::getCursorPos(x, y);
+    utils::Input::getCursorPos(x, y);
 
-    const bool dragging = app::Window::isMouseDown(app::MouseButton::Left);
+    const bool dragging = utils::Input::isMouseDown(utils::MouseButton::Left);
 
     if (dragging)
     {
@@ -248,7 +249,7 @@ void OrbitCamera::update(float /*dt*/)
     m_lastX = x;
     m_lastY = y;
 
-    double scroll = app::Window::consumeScrollDelta();
+    double scroll = utils::Input::consumeScrollDelta();
     if (scroll != 0.0)
     {
         m_radius *= static_cast<float>(std::pow(0.9, scroll));

@@ -140,14 +140,14 @@ bool Window::isKeyDown(utils::InputKey key)
     return glfwGetKey(s_Window, static_cast<int>(key)) == GLFW_PRESS;
 }
 
-bool Window::isMouseDown(MouseButton button)
+bool Window::isMouseDown(utils::MouseButton button)
 {
     int glfwButton = GLFW_MOUSE_BUTTON_LEFT;
 
     switch (button)
     {
-        case MouseButton::Right:  glfwButton = GLFW_MOUSE_BUTTON_RIGHT;  break;
-        case MouseButton::Middle: glfwButton = GLFW_MOUSE_BUTTON_MIDDLE; break;
+        case utils::MouseButton::Right:  glfwButton = GLFW_MOUSE_BUTTON_RIGHT;  break;
+        case utils::MouseButton::Middle: glfwButton = GLFW_MOUSE_BUTTON_MIDDLE; break;
         default: break;
     }
 

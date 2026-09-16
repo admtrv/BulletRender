@@ -14,12 +14,6 @@ struct GLFWwindow;
 namespace BulletRender {
 namespace app {
 
-enum class MouseButton {
-    Left,
-    Right,
-    Middle
-};
-
 enum class CursorMode {
     Normal,     // visible, free to leave the window
     Captured    // hidden and locked, for looking around
@@ -56,21 +50,19 @@ public:
     static void setVSync(bool enabled);
     static bool getVSync() { return s_vsync; }
 
-    // keyboard
-    static bool isKeyDown(utils::InputKey key);
-
-    // mouse
-    static bool isMouseDown(MouseButton button);
-    static void getCursorPos(double& x, double& y);
-
+    // cursor, captured while looking around
     static void setCursorMode(CursorMode mode);
     static CursorMode getCursorMode();
 
-    // scroll delta accumulated since last call, returns dy and clears it
-    static double consumeScrollDelta();
-
 private:
-    friend class Loop;   // imgui binds to the raw handle
+    friend class Loop;              // imgui binds to the raw handle
+    friend class utils::Input;      // user input reaches callers through Input
+
+    // window owns the handle glfw needs, Input is the door for callers
+    static bool isKeyDown(utils::InputKey key);
+    static bool isMouseDown(utils::MouseButton button);
+    static void getCursorPos(double& x, double& y);
+    static double consumeScrollDelta();
 
     static GLFWwindow* get();
     static void scrollCallback(GLFWwindow* w, double xoffset, double yoffset);

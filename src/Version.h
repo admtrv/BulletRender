@@ -6,6 +6,6 @@
 
 namespace BulletRender {
 
-inline constexpr const char* VERSION = "1.6.0";
+inline constexpr const char* VERSION = "1.7.0";
 
 } // namespace BulletRender
