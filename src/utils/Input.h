@@ -86,6 +86,7 @@ public:
 
     // state, asked any time
     static bool isKeyDown(InputKey key);
+    static bool isKeyPressed(InputKey key);     // down this frame, not one before
     static bool isMouseDown(MouseButton button);
     static void getCursorPos(double& x, double& y);
 
@@ -94,6 +95,9 @@ public:
 
     // callbacks, fired on press itself
     void update();
+
+    // closes frame, until it runs every caller still sees press
+    void endFrame();
 
     void bindKey(InputKey key, const InputCallback& callback);
     void unbindKey(InputKey key);
@@ -106,6 +110,8 @@ private:
     Input& operator=(const Input&) = delete;
 
     std::unordered_map<InputKey, InputCallback> m_callbacks;
+
+    // what every asked key did last frame, so press is told from hold
     std::unordered_map<InputKey, bool> m_keyState;
 };
 

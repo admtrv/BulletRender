@@ -43,20 +43,33 @@ double Input::consumeScrollDelta()
     return app::Window::consumeScrollDelta();
 }
 
+// asking watches key from now on, so next frame tells press from hold
+bool Input::isKeyPressed(InputKey key)
+{
+    Input& input = instance();
+    const bool held = input.m_keyState.try_emplace(key, false).first->second;
+
+    return isKeyDown(key) && !held;
+}
+
 void Input::update()
 {
+    // bindKey already listed these, so nothing is inserted while they are read
     for (const auto& [key, callback] : m_callbacks)
     {
-        const bool isPressed = isKeyDown(key);
-        const bool wasPressed = m_keyState[key];
-
-        // callback fires on press itself, not while key is held
-        if (isPressed && !wasPressed)
+        if (isKeyPressed(key))
         {
             callback();
         }
+    }
+}
 
-        m_keyState[key] = isPressed;
+void Input::endFrame()
+{
+    // press stands through whole frame, only next one sees hold
+    for (auto& [key, held] : m_keyState)
+    {
+        held = isKeyDown(key);
     }
 }
 
