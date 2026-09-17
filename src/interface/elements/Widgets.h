@@ -85,6 +85,25 @@ void windowContextMenu(const char* id, Body body)
     }
 }
 
+// asset slot: what is loaded now, a field to load another, and the last failure
+//
+//   Model      Teapot.obj  [Delete]
+//              [path      ] [ Load ]
+//              failed to load ...
+
+enum class AssetAction : uint8_t {
+    None,
+    Load,       // path field holds what to load
+    Clear       // slot emptied
+};
+
+struct AssetFieldState {
+    char path[256] = "";
+    std::string error;
+};
+
+AssetAction assetField(const char* label, const char* current, bool filled, AssetFieldState& state, const char* dragType = nullptr);
+
 // texture slots of a material, with previews and a load field
 inline constexpr size_t TEXTURE_PATH_LENGTH = 256;
 
@@ -119,6 +138,10 @@ bool overrideField(const char* label, bool& enabled, Widget widget)
     ImGui::PopID();
     return changed;
 }
+
+// same, for the values an override usually carries
+bool overrideField(const char* label, bool& enabled, glm::vec3& color);
+bool overrideField(const char* label, bool& enabled, float& value, float min, float max, const char* format);
 
 } // namespace interface
 } // namespace BulletRender

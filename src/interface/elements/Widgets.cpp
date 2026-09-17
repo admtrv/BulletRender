@@ -24,6 +24,7 @@ constexpr float SPLITTER_THICKNESS = 6.0f;      // hit area, drawn line is thinn
 constexpr float DRAG_RANGE_FRACTION = 0.002f;   // drag speed as share of range, keeps fields feeling alike
 
 constexpr float TEXTURE_PREVIEW_SIZE = 48.0f;
+constexpr const char* ASSET_BUTTONS[] = {"Delete", "Load"};     // widest sets the column both share
 constexpr int BITS_PER_ROW = 8;                 // mask splits into bytes, rows stay readable
 constexpr int AXIS_COUNT = 3;
 
@@ -102,6 +103,87 @@ void statRow(const char* label, const char* format, ...)
     va_start(args, format);
     ImGui::TextV(format, args);
     va_end(args);
+}
+
+// text that fits the width, tail dropped for an ellipsis when it does not
+static std::string shorten(const char* text, float width)
+{
+    if (ImGui::CalcTextSize(text).x <= width)
+    {
+        return text;
+    }
+
+    static const char* const TAIL = "...";
+
+    const float room = width - ImGui::CalcTextSize(TAIL).x;
+    const char* end = nullptr;
+
+    // font walks the string once and says where it ran out of room
+    ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), room, 0.0f, text, nullptr, &end);
+
+    return std::string(text, end) + TAIL;
+}
+
+AssetAction assetField(const char* label, const char* current, bool filled, AssetFieldState& state, const char* dragType)
+{
+    ImGui::PushID(label);
+
+    const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
+
+    float buttonWidth = 0.0f;
+    for (const char* caption : ASSET_BUTTONS)
+    {
+        buttonWidth = std::max(buttonWidth, ImGui::CalcTextSize(caption).x);
+    }
+    buttonWidth += ImGui::GetStyle().FramePadding.x * 2.0f;
+
+    // what is loaded now, cut when it does not fit so the row never grows
+    fieldLabel(label);
+
+    const float startX = ImGui::GetCursorPosX();
+    const float valueWidth = ImGui::GetContentRegionAvail().x - buttonWidth - spacing;
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(shorten(current, valueWidth).c_str());
+
+    ImGui::SameLine(startX + valueWidth, spacing);
+
+    ImGui::BeginDisabled(!filled);
+    const bool cleared = ImGui::Button("Delete", {buttonWidth, 0.0f});
+    ImGui::EndDisabled();
+
+    // path to load another, dropping one loads it at once, row starts where the panel does
+    const float pathWidth = ImGui::GetContentRegionAvail().x - buttonWidth - spacing;
+
+    ImGui::SetNextItemWidth(pathWidth);
+    ImGui::InputText("##path", state.path, sizeof(state.path));
+
+    bool dropped = false;
+
+    if (dragType && ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(dragType))
+        {
+            std::snprintf(state.path, sizeof(state.path), "%s", static_cast<const char*>(payload->Data));
+            dropped = true;
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+
+    ImGui::SameLine(0.0f, spacing);
+    const bool pressed = ImGui::Button("Load", {buttonWidth, 0.0f});
+
+    errorText(state.error);
+
+    ImGui::PopID();
+
+    if (cleared)
+    {
+        return AssetAction::Clear;
+    }
+
+    return pressed || dropped ? AssetAction::Load : AssetAction::None;
 }
 
 bool dragVector3(const char* label, glm::vec3& value, float speed, float min, float max, const char* format)
@@ -192,6 +274,16 @@ bool dragColor3(const char* label, glm::vec3& color)
 
     ImGui::PopID();
     return changed;
+}
+
+bool overrideField(const char* label, bool& enabled, glm::vec3& color)
+{
+    return overrideField(label, enabled, [&color]() { return dragColor3Bare(color); });
+}
+
+bool overrideField(const char* label, bool& enabled, float& value, float min, float max, const char* format)
+{
+    return overrideField(label, enabled, [&]() { return dragScalarBare(value, min, max, format); });
 }
 
 void errorText(const std::string& message)
