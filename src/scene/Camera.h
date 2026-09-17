@@ -25,6 +25,12 @@ enum class CameraType {
     Orbit
 };
 
+// how camera flattens world, perspective keeps depth, orthographic drops it
+enum class Projection {
+    Perspective,
+    Orthographic
+};
+
 // basic camera
 class Camera : public Named {
 public:
@@ -34,17 +40,24 @@ public:
     virtual CameraType getType() const = 0;
 
     virtual glm::mat4 getView() const = 0;
-    virtual glm::mat4 getProj(float aspect) const = 0;
-
-    virtual float getNear() const = 0;
-    virtual float getFar() const = 0;
     virtual glm::vec3 getPosition() const = 0;
-
     virtual void setPosition(const glm::vec3& pos) = 0;
-    virtual void setClipPlanes(float zNear, float zFar) = 0;
 
-    virtual float getFov() const = 0;
-    virtual void setFov(float fovDeg) = 0;
+    // projection
+    glm::mat4 getProj(float aspect) const;
+
+    Projection getProjection() const { return m_projection; }
+    void setProjection(Projection projection) { m_projection = projection; }
+
+    float getNear() const { return m_zNear; }
+    float getFar() const { return m_zFar; }
+    void setClipPlanes(float zNear, float zFar) { m_zNear = zNear; m_zFar = zFar; }
+
+    float getFov() const { return m_fovDeg; }                       // vertical angle, perspective only
+    void setFov(float fovDeg) { m_fovDeg = fovDeg; }
+
+    float getHeight() const { return m_height; }                    // world units view spans, orthographic only
+    void setHeight(float height) { m_height = height; }
 
     // orientation basis derived from getView() (transpose of upper 3x3)
     virtual glm::vec3 getForward() const;
@@ -52,6 +65,14 @@ public:
     virtual glm::vec3 getUp() const;
 
     virtual void update(float dt) {}
+
+protected:
+    Projection m_projection = Projection::Perspective;
+
+    float m_fovDeg = 60.0f;
+    float m_height = 10.0f;
+    float m_zNear = 0.1f;
+    float m_zFar = 100.0f;
 };
 
 // static camera (position ->->-> target)
@@ -63,24 +84,17 @@ public:
             float fovDeg = 60.0f,
             float zNear = 0.1f,
             float zFar = 100.0f)
-        : Camera("Static Camera"),
-          m_pos(pos), m_target(target), m_up(up), m_fovDeg(fovDeg), m_zNear(zNear), m_zFar(zFar)
-    {}
+        : Camera("Static Camera"), m_pos(pos), m_target(target), m_up(up)
+    {
+        setFov(fovDeg);
+        setClipPlanes(zNear, zFar);
+    }
 
     CameraType getType() const override { return CameraType::Static; }
 
     glm::mat4 getView() const override;
-    glm::mat4 getProj(float aspect) const override;
-
-    float getNear() const override { return m_zNear; }
-    float getFar()  const override { return m_zFar; }
     glm::vec3 getPosition() const override { return m_pos; }
-
     void setPosition(const glm::vec3& pos) override { m_pos = pos; }
-    void setClipPlanes(float zNear, float zFar) override { m_zNear = zNear; m_zFar = zFar; }
-
-    float getFov() const override { return m_fovDeg; }
-    void setFov(float fovDeg) override { m_fovDeg = fovDeg; }
 
     void setTarget(const glm::vec3& target) { m_target = target; }
     glm::vec3 getTarget() const { return m_target; }
@@ -89,9 +103,6 @@ private:
     glm::vec3 m_pos;
     glm::vec3 m_target;
     glm::vec3 m_up;
-    float m_fovDeg;
-    float m_zNear;
-    float m_zFar;
 };
 
 // fly camera (Look: hold RMB, Move: WASD, Boost: Shift)
@@ -110,17 +121,8 @@ public:
     CameraType getType() const override { return CameraType::Fly; }
 
     glm::mat4 getView() const override;
-    glm::mat4 getProj(float aspect) const override;
-
-    float getNear() const override { return m_zNear; }
-    float getFar()  const override { return m_zFar; }
     glm::vec3 getPosition() const override { return m_pos; }
-
     void setPosition(const glm::vec3& pos) override { m_pos = pos; }
-    void setClipPlanes(float zNear, float zFar) override { m_zNear = zNear; m_zFar = zFar; }
-
-    float getFov() const override { return m_fovDeg; }
-    void setFov(float fovDeg) override { m_fovDeg = fovDeg; }
 
     float getSpeed() const { return m_speed; }
     void setSpeed(float speed) { m_speed = speed; }
@@ -135,10 +137,7 @@ private:
     glm::vec3 m_pos;
     float m_yaw;
     float m_pitch;
-    float m_fovDeg;
     float m_speed;
-    float m_zNear;
-    float m_zFar;
 
     float m_sensitivity;
     app::CursorMode m_mode;
@@ -159,17 +158,8 @@ public:
     CameraType getType() const override { return CameraType::Orbit; }
 
     glm::mat4 getView() const override;
-    glm::mat4 getProj(float aspect) const override;
     glm::vec3 getPosition() const override;
-
-    float getNear() const override { return m_zNear; }
-    float getFar()  const override { return m_zFar; }
-
     void setPosition(const glm::vec3& pos) override;
-    void setClipPlanes(float zNear, float zFar) override { m_zNear = zNear; m_zFar = zFar; }
-
-    float getFov() const override { return m_fovDeg; }
-    void setFov(float fovDeg) override { m_fovDeg = fovDeg; }
 
     glm::vec3 getTarget() const { return m_target; }
     void setTarget(const glm::vec3& target) { m_target = target; }
@@ -185,9 +175,6 @@ private:
     float m_radius;
     float m_azimuth = 0.0f;
     float m_elevation = 1.5707963f;
-    float m_fovDeg;
-    float m_zNear;
-    float m_zFar;
 
     double m_lastX = 0.0;
     double m_lastY = 0.0;

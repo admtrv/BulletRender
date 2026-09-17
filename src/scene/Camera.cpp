@@ -32,16 +32,24 @@ glm::vec3 Camera::getUp() const
     return glm::vec3(v[0][1], v[1][1], v[2][1]);
 }
 
+glm::mat4 Camera::getProj(float aspect) const
+{
+    const float safe = aspect > 0.0f ? aspect : 1.0f;
+
+    if (m_projection == Projection::Orthographic)
+    {
+        const float half = m_height * 0.5f;
+        return glm::ortho(-half * safe, half * safe, -half, half, m_zNear, m_zFar);
+    }
+
+    return glm::perspective(glm::radians(m_fovDeg), safe, m_zNear, m_zFar);
+}
+
 // StaticCamera
 
 glm::mat4 StaticCamera::getView() const
 {
     return glm::lookAt(m_pos, m_target, m_up);
-}
-
-glm::mat4 StaticCamera::getProj(float aspect) const
-{
-    return glm::perspective(glm::radians(m_fovDeg), aspect, m_zNear, m_zFar);
 }
 
 // FlyCamera
@@ -59,16 +67,16 @@ FlyCamera::FlyCamera(glm::vec3 pos,
     , m_pos(pos)
     , m_yaw(yaw)
     , m_pitch(pitch)
-    , m_fovDeg(fovDeg)
     , m_speed(speed)
-    , m_zNear(zNear)
-    , m_zFar(zFar)
     , m_sensitivity(mouseSensitivity)
     , m_mode(lockCursor ? app::CursorMode::Captured : app::CursorMode::Normal)
     , m_mouseInit(false)
     , m_lastX(0.0)
     , m_lastY(0.0)
-{}
+{
+    setFov(fovDeg);
+    setClipPlanes(zNear, zFar);
+}
 
 glm::vec3 FlyCamera::forwardDir() const
 {
@@ -87,11 +95,6 @@ glm::mat4 FlyCamera::getView() const
 {
     const glm::vec3 f = forwardDir();
     return glm::lookAt(m_pos, m_pos + f, glm::vec3 WORLD_UP);
-}
-
-glm::mat4 FlyCamera::getProj(float aspect) const
-{
-    return glm::perspective(glm::radians(m_fovDeg), aspect > 0.0f ? aspect : 1.0f, m_zNear, m_zFar);
 }
 
 void FlyCamera::applyCursorMode()
@@ -201,9 +204,11 @@ void FlyCamera::update(float dt)
 // OrbitCamera
 
 OrbitCamera::OrbitCamera(glm::vec3 target, float radius, float fovDeg, float zNear, float zFar)
-    : Camera("Orbit Camera"),
-      m_target(target), m_radius(radius), m_fovDeg(fovDeg), m_zNear(zNear), m_zFar(zFar)
-{}
+    : Camera("Orbit Camera"), m_target(target), m_radius(radius)
+{
+    setFov(fovDeg);
+    setClipPlanes(zNear, zFar);
+}
 
 glm::vec3 OrbitCamera::getPosition() const
 {
@@ -224,11 +229,6 @@ void OrbitCamera::setPosition(const glm::vec3& pos)
 glm::mat4 OrbitCamera::getView() const
 {
     return glm::lookAt(getPosition(), m_target, glm::vec3(0.0f, 1.0f, 0.0f));
-}
-
-glm::mat4 OrbitCamera::getProj(float aspect) const
-{
-    return glm::perspective(glm::radians(m_fovDeg), aspect, m_zNear, m_zFar);
 }
 
 void OrbitCamera::update(float /*dt*/)
