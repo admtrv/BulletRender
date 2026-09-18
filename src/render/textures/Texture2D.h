@@ -25,6 +25,10 @@ public:
 
     void resize(int width, int height);
     void uploadPixels(const void* pixels, GLenum dataFormat, GLenum dataType);
+
+    // replaces one region, what lies around it stays
+    void uploadSubPixels(int x, int y, int width, int height, const void* pixels, GLenum dataFormat, GLenum dataType);
+
     void generateMipmaps();
 
     void bindAsImage(unsigned unit, GLenum access = GL_WRITE_ONLY) const;

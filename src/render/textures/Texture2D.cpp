@@ -70,6 +70,22 @@ void Texture2D::uploadPixels(const void* pixels, GLenum dataFormat, GLenum dataT
     }
 }
 
+void Texture2D::uploadSubPixels(int x, int y, int width, int height, const void* pixels, GLenum dataFormat, GLenum dataType)
+{
+    glBindTexture(GL_TEXTURE_2D, m_id);
+
+    // rows of single channel data come packed, default alignment would skew them
+    GLint alignment = 4;
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignment);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, width, height, dataFormat, dataType, pixels);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+
+    m_hasMipmaps = false;
+}
+
 void Texture2D::generateMipmaps()
 {
     glBindTexture(GL_TEXTURE_2D, m_id);

@@ -39,6 +39,9 @@ Canvas::Canvas()
     glEnableVertexAttribArray(2); // color
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(CanvasVertex), (void*)offsetof(CanvasVertex, color));
 
+    glEnableVertexAttribArray(3); // coverage
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(CanvasVertex), (void*)offsetof(CanvasVertex, coverage));
+
     glBindVertexArray(0);
 }
 
@@ -64,7 +67,81 @@ void Canvas::addImage(const Texture* texture, const glm::vec2& position, const g
     addQuad(texture ? texture : m_blank.get(), position, size, {0.0f, 0.0f}, {1.0f, 1.0f}, tint);
 }
 
-void Canvas::addQuad(const Texture* texture, const glm::vec2& position, const glm::vec2& size, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& color)
+// reads one utf8 codepoint, moving cursor past bytes it took
+static uint32_t nextCodepoint(const std::string& text, size_t& cursor)
+{
+    const auto byte = [&text](size_t at) { return uint32_t(static_cast<unsigned char>(text[at])); };
+
+    const uint32_t lead = byte(cursor++);
+
+    // leading byte says how many follow it
+    int trailing = 0;
+    uint32_t codepoint = lead;
+
+    if ((lead & 0xE0u) == 0xC0u)      { trailing = 1; codepoint = lead & 0x1Fu; }
+    else if ((lead & 0xF0u) == 0xE0u) { trailing = 2; codepoint = lead & 0x0Fu; }
+    else if ((lead & 0xF8u) == 0xF0u) { trailing = 3; codepoint = lead & 0x07u; }
+
+    while (trailing-- > 0 && cursor < text.size() && (byte(cursor) & 0xC0u) == 0x80u)
+    {
+        codepoint = (codepoint << 6) | (byte(cursor++) & 0x3Fu);
+    }
+
+    return codepoint;
+}
+
+// walks string once, handing every glyph its box, so drawing and measuring agree
+template <class Step>
+static glm::vec2 walkText(Font& font, const std::string& text, float size, Step step)
+{
+    const FontMetrics metrics = font.getMetrics(size);
+
+    float pen = 0.0f;
+    uint32_t previous = 0;
+
+    for (size_t cursor = 0; cursor < text.size(); )
+    {
+        const uint32_t codepoint = nextCodepoint(text, cursor);
+
+        if (previous)
+        {
+            pen += font.getKerning(previous, codepoint, size);
+        }
+
+        if (const Glyph* glyph = font.getGlyph(codepoint, size))
+        {
+            step(*glyph, pen);
+            pen += glyph->advance;
+        }
+
+        previous = codepoint;
+    }
+
+    return {pen, metrics.lineHeight};
+}
+
+void Canvas::addText(Font& font, const std::string& text, const glm::vec2& position, float size, const glm::vec4& color)
+{
+    const float baseline = position.y + font.getMetrics(size).ascent;
+
+    walkText(font, text, size, [&](const Glyph& glyph, float pen) {
+        if (glyph.size.x <= 0.0f || glyph.size.y <= 0.0f)
+        {
+            return;
+        }
+
+        const glm::vec2 corner{position.x + pen + glyph.bearing.x, baseline + glyph.bearing.y};
+
+        addQuad(font.getAtlas(), corner, glyph.size, glyph.uvMin, glyph.uvMax, color, true);
+    });
+}
+
+glm::vec2 Canvas::measureText(Font& font, const std::string& text, float size)
+{
+    return walkText(font, text, size, [](const Glyph&, float) {});
+}
+
+void Canvas::addQuad(const Texture* texture, const glm::vec2& position, const glm::vec2& size, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& color, bool coverage)
 {
     // nothing to see, and empty quad would still cost draw
     if (size.x <= 0.0f || size.y <= 0.0f)
@@ -81,10 +158,12 @@ void Canvas::addQuad(const Texture* texture, const glm::vec2& position, const gl
     const glm::vec2 min = position;
     const glm::vec2 max = position + size;
 
-    const CanvasVertex topLeft     = {{min.x, min.y}, {uvMin.x, uvMin.y}, color};
-    const CanvasVertex topRight    = {{max.x, min.y}, {uvMax.x, uvMin.y}, color};
-    const CanvasVertex bottomRight = {{max.x, max.y}, {uvMax.x, uvMax.y}, color};
-    const CanvasVertex bottomLeft  = {{min.x, max.y}, {uvMin.x, uvMax.y}, color};
+    const float flag = coverage ? 1.0f : 0.0f;
+
+    const CanvasVertex topLeft     = {{min.x, min.y}, {uvMin.x, uvMin.y}, color, flag};
+    const CanvasVertex topRight    = {{max.x, min.y}, {uvMax.x, uvMin.y}, color, flag};
+    const CanvasVertex bottomRight = {{max.x, max.y}, {uvMax.x, uvMax.y}, color, flag};
+    const CanvasVertex bottomLeft  = {{min.x, max.y}, {uvMin.x, uvMax.y}, color, flag};
 
     m_vertices.insert(m_vertices.end(), {topLeft, topRight, bottomRight, topLeft, bottomRight, bottomLeft});
     m_batches.back().count += VERTICES_PER_QUAD;
