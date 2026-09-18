@@ -18,6 +18,7 @@ Until now it grew on its own, in a vacuum, though always with the game engine in
 - **Cameras** of three kinds, static one looks at target, fly one moves with WASD and mouse, orbit one rotates around point
 - **Materials** carry phong terms and named texture slots, values not set fall back to what came with the model
 - **Models** load from obj with materials and textures, or come from built-in primitives
+- **Canvas** draws flat over the frame in pixels, takes shapes, images and text from ttf
 - **Debug view** draws gizmos for transforms, lights, cameras and object bounds
 - **Editor** gives side panel with scene hierarchy, inspector and settings, everything in scene is created and edited at runtime
 
@@ -35,6 +36,7 @@ Bundled in `external/`:
 - **Dear ImGui** for interfaces
 - **tinyobjloader** for obj parsing
 - **stb_image** for texture loading
+- **stb_truetype** for font rasterizing
 
 ## Structure
 
@@ -42,7 +44,7 @@ Bundled in `external/`:
 src/
 ├── app/          window and main loop
 ├── scene/        scene, objects, cameras, lights, models
-├── render/       renderer, passes, materials, textures
+├── render/       renderer, passes, materials, textures, fonts
 ├── interface/    editor (only in standalone build)
 └── utils/
 ```

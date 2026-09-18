@@ -6,12 +6,14 @@
 
 #include "RenderPass.h"
 #include "render/Shader.h"
+#include "render/text/Font.h"
 #include "render/textures/Texture2D.h"
 
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace BulletRender {
@@ -24,6 +26,7 @@ struct CanvasVertex {
     glm::vec2 pos;
     glm::vec2 uv;
     glm::vec4 color;
+    float coverage = 0.0f;      // glyph carries alpha in red channel, image carries whole color
 };
 
 // flat layer over frame, drawn in pixels from top left corner
@@ -43,6 +46,10 @@ public:
     void addRect(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
     void addImage(const Texture* texture, const glm::vec2& position, const glm::vec2& size, const glm::vec4& tint = glm::vec4(1.0f));
 
+    // position is left end of baseline, what measure reports fits around it
+    void addText(Font& font, const std::string& text, const glm::vec2& position, float size, const glm::vec4& color);
+    static glm::vec2 measureText(Font& font, const std::string& text, float size);
+
     void render(const scene::Scene& scene) override;
 
     // drops what was added, whether views drew it or not
@@ -55,7 +62,7 @@ private:
         size_t count = 0;               // vertices, six per quad
     };
 
-    void addQuad(const Texture* texture, const glm::vec2& position, const glm::vec2& size, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& color);
+    void addQuad(const Texture* texture, const glm::vec2& position, const glm::vec2& size, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& color, bool coverage = false);
 
     std::shared_ptr<GraphicsShader> m_program;
     GLuint m_vao = 0;

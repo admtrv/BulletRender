@@ -81,6 +81,11 @@ add_library(stb_image STATIC ${CMAKE_CURRENT_SOURCE_DIR}/external/stb/stb_image.
 target_include_directories(stb_image PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/external/stb)
 target_link_libraries(${LIB_NAME} PUBLIC stb_image)
 
+# stb_truetype
+add_library(stb_truetype STATIC ${CMAKE_CURRENT_SOURCE_DIR}/external/stb/stb_truetype.cpp)
+target_include_directories(stb_truetype PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/external/stb)
+target_link_libraries(${LIB_NAME} PUBLIC stb_truetype)
+
 # if standalone app
 if(DEFINED PROJECT_IS_TOP_LEVEL)
     set(_default_app ${PROJECT_IS_TOP_LEVEL})
