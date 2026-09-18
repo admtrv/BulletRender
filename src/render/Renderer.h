@@ -64,6 +64,9 @@ public:
 
     static float getAspect();
 
+    // size being drawn into, in pixels, what screen space is measured against
+    static glm::ivec2 getViewport();
+
 private:
     static void renderBasePass(const scene::Scene& scene);
     static void renderShadowPass(const scene::Scene& scene);

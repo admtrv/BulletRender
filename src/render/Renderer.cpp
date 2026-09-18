@@ -193,19 +193,23 @@ void Renderer::resizeViewport(int width, int height)
     }
 }
 
-float Renderer::getAspect()
+glm::ivec2 Renderer::getViewport()
 {
-    int width = s_viewportWidth;
-    int height = s_viewportHeight;
-
+    // a frame going into a texture is measured by it, not by the window
     if (s_target)
     {
-        width = s_target->getWidth();
-        height = s_target->getHeight();
+        return {s_target->getWidth(), s_target->getHeight()};
     }
 
+    return {s_viewportWidth, s_viewportHeight};
+}
+
+float Renderer::getAspect()
+{
+    const glm::ivec2 viewport = getViewport();
+
     // minimized window reports zero height, square keeps the projection finite
-    return height > 0 ? float(width) / float(height) : 1.0f;
+    return viewport.y > 0 ? float(viewport.x) / float(viewport.y) : 1.0f;
 }
 
 void Renderer::registerPrePass(std::shared_ptr<IRenderPass> pass)
