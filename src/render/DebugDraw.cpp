@@ -27,6 +27,8 @@ constexpr float DIR_LIGHT_RAY_LENGTH = 1.0f;
 constexpr float DIR_LIGHT_GRID_STEP = 0.35f;
 constexpr int DIR_LIGHT_RAYS = 3;               // rays per side of the grid
 
+constexpr int CYLINDER_RAILS = 4;               // lines down the side, enough to read its facing
+
 constexpr float POINT_LIGHT_RADIUS = 0.3f;
 constexpr float SPOT_LIGHT_LENGTH = 1.5f;       // opening angle stays real, only length fixed
 
@@ -261,6 +263,29 @@ void DebugDraw::drawCircle(const glm::vec3& center, const glm::vec3& normal, flo
         const glm::vec3 point = center + right * glm::cos(angle) + up * glm::sin(angle);
         m_lines->addLine(previous, point, color);
         previous = point;
+    }
+}
+
+void DebugDraw::drawCylinder(const glm::vec3& center, const glm::vec3& axis, float radius, float height, const glm::vec3& color, int segments)
+{
+    const glm::vec3 direction = glm::normalize(axis);
+    const glm::vec3 offset = direction * (height * 0.5f);
+
+    const glm::vec3 top = center + offset;
+    const glm::vec3 bottom = center - offset;
+
+    drawCircle(top, direction, radius, color, segments);
+    drawCircle(bottom, direction, radius, color, segments);
+
+    const glm::vec3 right = anyPerpendicular(direction) * radius;
+    const glm::vec3 up = glm::normalize(glm::cross(direction, right)) * radius;
+
+    for (int i = 0; i < CYLINDER_RAILS; i++)
+    {
+        const float angle = glm::two_pi<float>() * float(i) / float(CYLINDER_RAILS);
+        const glm::vec3 rim = right * glm::cos(angle) + up * glm::sin(angle);
+
+        m_lines->addLine(bottom + rim, top + rim, color);
     }
 }
 

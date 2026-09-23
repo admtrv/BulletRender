@@ -64,5 +64,19 @@ public:
     Sphere(float radius, int segments, int rings);
 };
 
+// flat ones lie in xy, what sprite is drawn on
+
+class Quad : public Model {
+public:
+    Quad();
+    Quad(float sizeX, float sizeY);
+};
+
+class Circle : public Model {
+public:
+    Circle();
+    Circle(float radius, int segments);
+};
+
 } // namespace scene
 } // namespace BulletRender

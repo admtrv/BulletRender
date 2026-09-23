@@ -110,10 +110,9 @@ private:
     bool m_lightsFolded = false;
     bool m_camerasFolded = false;
 
-    // file loading, path survives between frames
-    char m_modelPath[256] = "";
-    std::string m_modelError;
-    TextureFieldState m_textureField;
+    // asset slots, what was picked survives between frames
+    AssetFieldState m_modelField;
+    AssetFieldState m_textureField;
 
     // panel
     float m_panelWidth = 340.0f;

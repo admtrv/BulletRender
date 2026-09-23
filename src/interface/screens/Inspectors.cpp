@@ -6,9 +6,13 @@
 
 #include "interface/elements/Widgets.h"
 #include "Colors.h"
+#include "render/textures/TextureLoader.h"
 #include "scene/models/ModelLoader.h"
 
 #include "imgui.h"
+
+#include <algorithm>
+#include <cstring>
 
 namespace BulletRender {
 namespace interface {
@@ -37,6 +41,13 @@ constexpr float ORBIT_RADIUS_MAXIMUM = 200.0f;
 // material
 constexpr float SHININESS_MINIMUM = 1.0f;
 constexpr float SHININESS_MAXIMUM = 256.0f;
+
+// slot shows what file was taken, whole path would not fit
+static const char* fileName(const char* path)
+{
+    const char* slash = std::strrchr(path, '/');
+    return slash ? slash + 1 : path;
+}
 
 // type names, indexed by matching enum
 static const char* const LIGHT_TYPE_NAMES[] = {"Ambient", "Directional", "Point", "Spot"};
@@ -427,23 +438,31 @@ void Editor::drawModelInspector(scene::SceneObject& object)
         ImGui::TextDisabled("No model");
     }
 
-    ImGui::TextUnformatted("Load from file");
+    const bool filled = object.getModel() != nullptr;
 
-    if (loadFromFileField("model", m_modelPath, sizeof(m_modelPath), "path/to/model"))
+    switch (assetField("Model", filled ? fileName(m_modelField.path) : "None", filled, m_modelField))
     {
-        // loaded geometry joins scene and goes to selected object
-        if (std::shared_ptr<scene::Model> model = scene::ModelLoader::instance().load(m_modelPath))
-        {
-            object.setModel(std::move(model));
-            m_modelError.clear();
-        }
-        else
-        {
-            m_modelError = "failed to load " + std::string(m_modelPath);
-        }
-    }
+        case AssetAction::Clear:
+            object.setModel(nullptr);
+            m_modelField.error.clear();
+            break;
 
-    errorText(m_modelError);
+        case AssetAction::Load:
+            // loaded geometry joins scene and goes to selected object
+            if (std::shared_ptr<scene::Model> model = scene::ModelLoader::instance().load(m_modelField.path))
+            {
+                object.setModel(std::move(model));
+                m_modelField.error.clear();
+            }
+            else
+            {
+                m_modelField.error = "failed to load " + std::string(m_modelField.path);
+            }
+            break;
+
+        default:
+            break;
+    }
 }
 
 void Editor::drawMaterialInspector(render::Material& material)
@@ -496,7 +515,31 @@ void Editor::drawTextureInspector(render::Material& material)
         return;
     }
 
-    materialTextures("material", material, m_textureField);
+    const auto& slots = material.getTextures();
+    const bool filled = std::any_of(slots.begin(), slots.end(), [](const render::TextureSlot& slot) { return slot.texture != nullptr; });
+
+    switch (assetField("Albedo", filled ? fileName(m_textureField.path) : "None", filled, m_textureField))
+    {
+        case AssetAction::Clear:
+            material.clearTexture(render::ALBEDO_UNIFORM);
+            m_textureField.error.clear();
+            break;
+
+        case AssetAction::Load:
+            if (auto texture = render::TextureLoader::instance().load(m_textureField.path))
+            {
+                material.setTexture(render::ALBEDO_UNIFORM, std::move(texture), render::ALBEDO_UNIT);
+                m_textureField.error.clear();
+            }
+            else
+            {
+                m_textureField.error = "failed to load " + std::string(m_textureField.path);
+            }
+            break;
+
+        default:
+            break;
+    }
 }
 
 } // namespace interface

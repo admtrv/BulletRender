@@ -67,6 +67,18 @@ void Loop::run(const std::function<void(float)>& update)
             m_beforeFrame();
         }
 
+        // captured cursor still reports, interface would light up under nothing
+        ImGuiIO& io = ImGui::GetIO();
+
+        if (Window::getCursorMode() == CursorMode::Captured)
+        {
+            io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
+        }
+        else
+        {
+            io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+        }
+
         // ImGui new frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();

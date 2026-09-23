@@ -62,7 +62,17 @@ public:
     void clearTextures() noexcept { m_textures.clear(); }
     const std::vector<TextureSlot>& getTextures() const noexcept { return m_textures; }
 
+    // drawn after solid ones and blended, what picture with holes in it needs
+    bool isTransparent() const noexcept { return m_transparent; }
+    void setTransparent(bool transparent) noexcept { m_transparent = transparent; }
+
+    // shown as it is, no light shaping it, what flat picture expects
+    bool isUnlit() const noexcept { return m_unlit; }
+    void setUnlit(bool unlit) noexcept { m_unlit = unlit; }
+
 private:
+    bool m_transparent = false;
+    bool m_unlit = false;
     std::shared_ptr<GraphicsShader> m_shader;
     std::optional<glm::vec3> m_color;
     std::optional<glm::vec3> m_specular;

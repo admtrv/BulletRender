@@ -10,6 +10,7 @@ in vec2 vUv;
 uniform vec3 uColor;
 uniform sampler2D uAlbedo;
 uniform int uHasAlbedo;
+uniform int uUnlit;
 
 uniform vec3 uMatSpecular;
 uniform float uMatShininess;
@@ -107,9 +108,17 @@ void main()
 
     // kd, diffuse base (color * map_Kd)
     vec3 base = uColor;
+    float alpha = 1.0;
+
     if (uHasAlbedo != 0)
     {
-        base *= texture(uAlbedo, vUv).rgb;
+        vec4 albedo = texture(uAlbedo, vUv);
+
+        base *= albedo.rgb;
+        alpha = albedo.a;
+
+        // what is barely there is dropped, so depth stays true for passes that read it
+        if (alpha < 0.01) discard;
     }
 
     // ks, specular color (material * map_Ks)
@@ -172,5 +181,6 @@ void main()
         color += phong(N, V, L, uSpotLights[i].color, base, specColor, shininess) * att * vis;
     }
 
-    FragColor = vec4(color, 1.0);
+    // flat picture carries its own shading, light would only dull it
+    FragColor = vec4(uUnlit != 0 ? base : color, alpha);
 }

@@ -62,16 +62,17 @@ int main()
     scene::Scene scene;
 
     // cursor starts free so panel is usable
-    scene.createCamera<scene::FlyCamera>(glm::vec3{0.0f, 2.0f, 8.0f}, -90.0f, 0.0f, 60.0f, 3.0f, 0.1f, 100.0f, 0.1f, false);
+    scene.createCamera<scene::FlyCamera>(glm::vec3{0.0f, 2.0f, 8.0f}, -90.0f, 0.0f, 60.0f, 3.0f, 0.1f, 100.0f, 0.1f);
 
     // default scene
     scene::AmbientLight* ambient = scene.createLight<scene::AmbientLight>();
     ambient->setColor({0.4f, 0.45f, 0.55f});
     ambient->setIntensity(0.3f);
 
-    scene::DirectionalLight* sun = scene.createLight<scene::DirectionalLight>(glm::vec3{-0.7f, 0.7f, 0.25f});
+    scene::DirectionalLight* sun = scene.createLight<scene::DirectionalLight>();
     sun->setColor({1.0f, 0.95f, 0.85f});
     sun->setIntensity(0.8f);
+    sun->setPosition(5.0f * sun->getDirection());
 
     // default cube
     auto cubeModel = std::make_shared<scene::Box>(1.0f, 1.0f, 1.0f);

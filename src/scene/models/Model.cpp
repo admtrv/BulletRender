@@ -435,5 +435,53 @@ Sphere::Sphere(float radius, int segments, int rings)
     addMesh(vertices, indices, -1);
 }
 
+Quad::Quad() : Quad(1.0f, 1.0f) {}
+
+Quad::Quad(float sizeX, float sizeY)
+{
+    const float hx = sizeX * 0.5f;
+    const float hy = sizeY * 0.5f;
+
+    const std::vector<Vertex> vertices = {
+        {{-hx, -hy, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{ hx, -hy, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+        {{ hx,  hy, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-hx,  hy, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
+    };
+
+    addMesh(vertices, {0, 1, 2, 0, 2, 3}, -1);
+}
+
+Circle::Circle() : Circle(0.5f, 32) {}
+
+Circle::Circle(float radius, int segments)
+{
+    segments = std::max(segments, 3);
+
+    std::vector<Vertex> vertices;
+    std::vector<unsigned> indices;
+
+    // middle first, rim fans out of it
+    vertices.push_back({{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.5f, 0.5f}});
+
+    for (int segment = 0; segment <= segments; segment++)
+    {
+        const float angle = 2.0f * glm::pi<float>() * float(segment) / float(segments);
+        const float x = std::cos(angle);
+        const float y = std::sin(angle);
+
+        vertices.push_back({{x * radius, y * radius, 0.0f}, {0.0f, 0.0f, 1.0f}, {x * 0.5f + 0.5f, y * 0.5f + 0.5f}});
+    }
+
+    for (int segment = 0; segment < segments; segment++)
+    {
+        indices.push_back(0);
+        indices.push_back(static_cast<unsigned>(segment + 1));
+        indices.push_back(static_cast<unsigned>(segment + 2));
+    }
+
+    addMesh(vertices, indices, -1);
+}
+
 } // namespace scene
 } // namespace BulletRender

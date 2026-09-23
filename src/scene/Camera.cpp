@@ -7,9 +7,14 @@
 #include "app/Window.h"
 #include "utils/Input.h"
 
+#include <cmath>
+
 
 namespace BulletRender {
 namespace scene {
+
+constexpr float DRAG_SHARE = 0.0015f;       // share of view height per pixel dragged
+constexpr float ZOOM_STEP = 0.1f;           // per notch of wheel
 
 // Camera
 
@@ -30,6 +35,43 @@ glm::vec3 Camera::getUp() const
 {
     glm::mat4 v = getView();
     return glm::vec3(v[0][1], v[1][1], v[2][1]);
+}
+
+bool Camera::holdCursor(bool wanted)
+{
+    if (wanted != m_holding)
+    {
+        m_holding = wanted;
+
+        app::Window::setCursorMode(wanted ? app::CursorMode::Captured : app::CursorMode::Normal);
+
+        // cursor jumped on either change, next frame starts fresh delta
+        m_cursorInit = false;
+    }
+
+    // something else may have freed cursor, put it back the way drag needs it
+    if (m_holding && app::Window::getCursorMode() != app::CursorMode::Captured)
+    {
+        app::Window::setCursorMode(app::CursorMode::Captured);
+        m_cursorInit = false;
+    }
+
+    return m_holding;
+}
+
+glm::vec2 Camera::cursorDelta()
+{
+    double x = 0.0;
+    double y = 0.0;
+    utils::Input::getCursorPos(x, y);
+
+    const glm::vec2 delta = m_cursorInit ? glm::vec2(float(x - m_lastX), float(y - m_lastY)) : glm::vec2(0.0f);
+
+    m_lastX = x;
+    m_lastY = y;
+    m_cursorInit = true;
+
+    return delta;
 }
 
 glm::mat4 Camera::getProj(float aspect) const
@@ -61,18 +103,13 @@ FlyCamera::FlyCamera(glm::vec3 pos,
         float speed,
         float zNear,
         float zFar,
-        float mouseSensitivity,
-        bool lockCursor)
+        float mouseSensitivity)
     : Camera("Fly Camera")
     , m_pos(pos)
     , m_yaw(yaw)
     , m_pitch(pitch)
     , m_speed(speed)
     , m_sensitivity(mouseSensitivity)
-    , m_mode(lockCursor ? app::CursorMode::Captured : app::CursorMode::Normal)
-    , m_mouseInit(false)
-    , m_lastX(0.0)
-    , m_lastY(0.0)
 {
     setFov(fovDeg);
     setClipPlanes(zNear, zFar);
@@ -97,65 +134,15 @@ glm::mat4 FlyCamera::getView() const
     return glm::lookAt(m_pos, m_pos + f, glm::vec3 WORLD_UP);
 }
 
-void FlyCamera::applyCursorMode()
-{
-    app::Window::setCursorMode(m_mode);
-
-    // the cursor jumped, so the next frame starts a fresh delta
-    m_mouseInit = false;
-}
-
-void FlyCamera::toggleCursorMode()
-{
-    m_mode = (m_mode == app::CursorMode::Captured) ? app::CursorMode::Normal : app::CursorMode::Captured;
-
-    applyCursorMode();
-}
-
 void FlyCamera::update(float dt)
 {
-    // something else may have changed the cursor, put it back the way this camera wants it
-    if (app::Window::getCursorMode() != m_mode)
+    // holding right button looks around, releasing it hands cursor back
+    if (holdCursor(utils::Input::isMouseDown(utils::MouseButton::Right)))
     {
-        applyCursorMode();
-    }
+        const glm::vec2 moved = cursorDelta() * m_sensitivity;
 
-    // holding the right button flies, releasing it hands the cursor back
-    const bool holding = utils::Input::isMouseDown(utils::MouseButton::Right);
-
-    if (holding != (m_mode == app::CursorMode::Captured))
-    {
-        toggleCursorMode();
-    }
-
-    // a captured cursor leaves the window behind, the look must carry on regardless
-    if (!holding && !app::Window::isHovered())
-    {
-        m_mouseInit = false;
-        return;
-    }
-
-    // camera rotation
-    if (m_mode == app::CursorMode::Captured)
-    {
-        double x;
-        double y;
-        utils::Input::getCursorPos(x, y);
-
-        if (!m_mouseInit)
-        {
-            m_lastX = x;
-            m_lastY = y;
-            m_mouseInit = true;
-        }
-
-        const double dx = x - m_lastX;
-        const double dy = m_lastY - y;
-        m_lastX = x;
-        m_lastY = y;
-
-        m_yaw += static_cast<float>(dx) * m_sensitivity;
-        m_pitch += static_cast<float>(dy) * m_sensitivity;
+        m_yaw += moved.x;
+        m_pitch -= moved.y;
 
         if (m_pitch >  YAW_LIMIT)
         {
@@ -198,6 +185,66 @@ void FlyCamera::update(float dt)
     if (utils::Input::isKeyDown(utils::InputKey::D))
     {
         m_pos += right * step;
+    }
+}
+
+// PanCamera
+
+PanCamera::PanCamera(glm::vec2 center, float height, float depth, float speed)
+    : Camera("Pan Camera"), m_center(center), m_depth(depth), m_speed(speed)
+{
+    setProjection(Projection::Orthographic);
+    setHeight(height);
+
+    // stands off plane, far side reaches well past whatever sits behind it
+    setClipPlanes(0.1f, depth * 2.0f);
+}
+
+glm::mat4 PanCamera::getView() const
+{
+    const glm::vec3 eye{m_center, m_depth};
+    return glm::lookAt(eye, glm::vec3(m_center, 0.0f), glm::vec3 WORLD_UP);
+}
+
+void PanCamera::update(float dt)
+{
+    // step scales with how much is on screen, so panning feels same at any zoom
+    const float step = getHeight() * m_speed * dt;
+
+    if (utils::Input::isKeyDown(utils::InputKey::W))
+    {
+        m_center.y += step;
+    }
+    if (utils::Input::isKeyDown(utils::InputKey::S))
+    {
+        m_center.y -= step;
+    }
+    if (utils::Input::isKeyDown(utils::InputKey::A))
+    {
+        m_center.x -= step;
+    }
+    if (utils::Input::isKeyDown(utils::InputKey::D))
+    {
+        m_center.x += step;
+    }
+
+    // holding right button drags view, same button fly camera looks with
+    if (holdCursor(utils::Input::isMouseDown(utils::MouseButton::Right)))
+    {
+        // what a pixel spans, so grabbed point keeps up with cursor
+        const glm::vec2 moved = cursorDelta() * getHeight() * DRAG_SHARE;
+
+        m_center.x -= moved.x;
+        m_center.y += moved.y;
+    }
+
+    if (const double scroll = utils::Input::consumeScrollDelta(); scroll != 0.0)
+    {
+        const float before = getHeight();
+        setHeight(before * std::exp(float(-scroll) * ZOOM_STEP));
+
+        // what sat under cursor stays there, so zooming closes in rather than drifts
+        m_center += m_anchor * (before - getHeight()) * 0.5f;
     }
 }
 

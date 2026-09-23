@@ -22,7 +22,8 @@ namespace scene {
 enum class CameraType {
     Static,
     Fly,
-    Orbit
+    Orbit,
+    Pan
 };
 
 // how camera flattens world, perspective keeps depth, orthographic drops it
@@ -67,12 +68,24 @@ public:
     virtual void update(float dt) {}
 
 protected:
+    // hides and locks cursor while button drags view, says whether drag carries on
+    bool holdCursor(bool wanted);
+
+    // cursor moved since last frame, zero on first one so view never jumps
+    glm::vec2 cursorDelta();
+
     Projection m_projection = Projection::Perspective;
 
     float m_fovDeg = 60.0f;
     float m_height = 10.0f;
     float m_zNear = 0.1f;
     float m_zFar = 100.0f;
+
+private:
+    bool m_holding = false;
+    bool m_cursorInit = false;
+    double m_lastX = 0.0;
+    double m_lastY = 0.0;
 };
 
 // static camera (position ->->-> target)
@@ -115,8 +128,7 @@ public:
                        float speed = 3.f,
                        float zNear = 0.1f,
                        float zFar = 100.f,
-                       float mouseSensitivity = 0.1f,
-                       bool lockCursor = true);
+                       float mouseSensitivity = 0.1f);
 
     CameraType getType() const override { return CameraType::Fly; }
 
@@ -131,19 +143,39 @@ public:
 
 private:
     glm::vec3 forwardDir() const;
-    void applyCursorMode();
-    void toggleCursorMode();
 
     glm::vec3 m_pos;
     float m_yaw;
     float m_pitch;
     float m_speed;
-
     float m_sensitivity;
-    app::CursorMode m_mode;
-    bool m_mouseInit;
-    double m_lastX;
-    double m_lastY;
+};
+
+// pan camera (Move: WASD or hold RMB, Zoom: wheel)
+// looks straight down depth axis, nothing turns it so what it shows stays flat
+class PanCamera : public Camera {
+public:
+    explicit PanCamera(glm::vec2 center = {0.0f, 0.0f}, float height = 10.0f, float depth = 10.0f, float speed = 0.8f);
+
+    CameraType getType() const override { return CameraType::Pan; }
+
+    glm::mat4 getView() const override;
+    glm::vec3 getPosition() const override { return {m_center, m_depth}; }
+    void setPosition(const glm::vec3& pos) override { m_center = {pos.x, pos.y}; m_depth = pos.z; }
+
+    float getSpeed() const { return m_speed; }                      // share of view height crossed per second
+    void setSpeed(float speed) { m_speed = speed; }
+
+    void update(float dt) override;
+
+    // where wheel pulls towards, in view units from middle, keeps a spot under cursor
+    void setZoomAnchor(const glm::vec2& anchor) { m_anchor = anchor; }
+
+private:
+    glm::vec2 m_center;     // what sits in middle of view
+    glm::vec2 m_anchor{0.0f, 0.0f};
+    float m_depth;          // how far back it stands, so nothing falls behind it
+    float m_speed;
 };
 
 // orbit camera (LMB drag = rotate, scroll = zoom)

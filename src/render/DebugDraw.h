@@ -43,6 +43,7 @@ public:
     void drawCircle(const glm::vec3& center, const glm::vec3& normal, float radius, const glm::vec3& color, int segments = 24);
     void drawSphere(const glm::vec3& center, float radius, const glm::vec3& color);
     void drawSphere(const glm::vec3& center, float radius, const glm::quat& orientation, const glm::vec3& color);
+    void drawCylinder(const glm::vec3& center, const glm::vec3& axis, float radius, float height, const glm::vec3& color, int segments = 24);
     void drawArrow(const glm::vec3& from, const glm::vec3& to, const glm::vec3& color);
     void drawCone(const glm::vec3& apex, const glm::vec3& direction, float length, float angleRad, const glm::vec3& color);
     void drawPlane(const glm::vec3& point, const glm::vec3& normal, float radius, const glm::vec3& color, int stripes = 9);

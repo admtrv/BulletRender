@@ -63,7 +63,7 @@ void Theme::apply()
     // surfaces
     colors[ImGuiCol_WindowBg] = rgba(colors::Grey900);
     colors[ImGuiCol_ChildBg] = rgba(colors::Grey900);
-    colors[ImGuiCol_PopupBg] = rgba(colors::Grey800);
+    colors[ImGuiCol_PopupBg] = rgba(colors::Grey900);     // same as windows, so fields stand out on it
     colors[ImGuiCol_Border] = rgba(colors::Grey500, 0.5f);
     colors[ImGuiCol_BorderShadow] = rgba(colors::Grey900, 0.0f);
 

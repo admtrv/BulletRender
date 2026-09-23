@@ -5,6 +5,10 @@
 #include "Renderer.h"
 #include "app/Window.h"
 
+#include <glm/gtx/norm.hpp>
+
+#include <algorithm>
+
 namespace BulletRender {
 namespace render {
 
@@ -455,13 +459,55 @@ void Renderer::renderBasePass(const scene::Scene& scene)
         return;
     }
 
+    // pre passes leave depth however they pleased, geometry needs it plain
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+
     LightUniforms lights = collectLights(scene);
+
+    // solid ones first, then what blends, sorted back to front so overlaps read right
+    std::vector<const scene::SceneObject*> queue;
 
     for (const auto& object : scene.getObjects())
     {
-        if (!object || !object->isVisible())
+        if (object && object->isVisible() && object->getModel())
         {
-            continue;
+            queue.push_back(object.get());
+        }
+    }
+
+    const glm::vec3 eye = cam->getPosition();
+
+    // how far object stands, its origin stands in for whole of it
+    const auto distance = [&eye](const scene::SceneObject* object) {
+        return glm::distance2(eye, glm::vec3(object->getTransform().getMatrix()[3]));
+    };
+
+    std::stable_sort(queue.begin(), queue.end(), [&distance](const scene::SceneObject* left, const scene::SceneObject* right) {
+        const bool leftBlends = left->getMaterial().isTransparent();
+        const bool rightBlends = right->getMaterial().isTransparent();
+
+        // solid ones keep order they came in, only blended ones need sorting
+        if (leftBlends != rightBlends)
+        {
+            return !leftBlends;
+        }
+
+        return leftBlends && distance(left) > distance(right);
+    });
+
+    bool blending = false;
+
+    for (const scene::SceneObject* object : queue)
+    {
+        // blended ones still write depth, passes reading it would lose them otherwise
+        if (!blending && object->getMaterial().isTransparent())
+        {
+            blending = true;
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
 
         const scene::Model* model = object->getModel().get();
@@ -587,10 +633,17 @@ void Renderer::renderBasePass(const scene::Scene& scene)
                 }
             }
             shader->setInt("uHasAlbedo", hasAlbedo ? 1 : 0);
+            shader->setInt("uUnlit", objectMaterial.isUnlit() ? 1 : 0);
             shader->setInt("uHasSpecMap", hasSpecMap ? 1 : 0);
 
             meshes[meshIdx].draw();
         }
+    }
+
+    // restore whatever blended run turned on
+    if (blending)
+    {
+        glDisable(GL_BLEND);
     }
 }
 
