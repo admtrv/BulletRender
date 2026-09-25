@@ -17,7 +17,7 @@ bool Loop::s_drawScene = true;
 void Loop::waitForFrameLimit(double frameStart)
 {
     // vsync already paces swap, second limiter would add stutter
-    if (s_frameRateLimit <= 0 || Window::getVSync())
+    if (s_frameRateLimit <= 0 || Window::isVSync())
     {
         return;
     }
@@ -94,7 +94,7 @@ void Loop::run(const std::function<void(float)>& update)
         Window::getSize(fbw, fbh);
         render::Renderer::resizeViewport(fbw, fbh);
 
-        const glm::vec4& clearColor = render::Renderer::getConfig().backgroundColor;
+        const glm::vec4& clearColor = render::Renderer::getBackgroundColor();
         render::Renderer::clear(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
 
         if (s_drawScene)

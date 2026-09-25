@@ -42,13 +42,6 @@ constexpr float ORBIT_RADIUS_MAXIMUM = 200.0f;
 constexpr float SHININESS_MINIMUM = 1.0f;
 constexpr float SHININESS_MAXIMUM = 256.0f;
 
-// slot shows what file was taken, whole path would not fit
-static const char* fileName(const char* path)
-{
-    const char* slash = std::strrchr(path, '/');
-    return slash ? slash + 1 : path;
-}
-
 // type names, indexed by matching enum
 static const char* const LIGHT_TYPE_NAMES[] = {"Ambient", "Directional", "Point", "Spot"};
 static const char* const CAMERA_TYPE_NAMES[] = {"Static", "Fly", "Orbit"};

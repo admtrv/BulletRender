@@ -8,7 +8,7 @@
 #include "interface/elements/Widgets.h"
 #include "Config.h"
 #include "render/DebugDraw.h"
-#include "render/passes/Fog.h"
+#include "render/passes/SkyBox.h"
 #include "scene/Scene.h"
 
 #include <memory>
@@ -34,13 +34,24 @@ struct Selection {
     bool is(SelectionType t, size_t i) const { return type == t && index == i; }
 };
 
+// what stands behind scene
+enum class Background : uint8_t {
+    Color,
+    Skybox
+};
+
+enum class SkyLayout : uint8_t {
+    Cross,
+    Faces
+};
+
 // side panel driving scene, standalone tool only
 class Editor {
 public:
     Editor(scene::Scene& scene, render::DebugDraw& debug);
 
     // optional pieces panels expose when present
-    void setFog(std::shared_ptr<render::Fog> fog) { m_fog = std::move(fog); }
+    void setSkyBox(std::shared_ptr<render::SkyBox> skybox) { m_skybox = std::move(skybox); }
     void setDefaultShader(std::shared_ptr<render::GraphicsShader> shader) { m_shader = std::move(shader); }
 
     void draw(float dt);
@@ -81,9 +92,9 @@ private:
     void drawSettings(float dt);
     void drawFrameSection(float dt);
     void drawInterfaceSection();
-    void drawBackgroundSection();
     void drawDebugSection();
-    void drawFogSection();
+    void drawEnvironmentSection();
+    void applyBackground();
 
     // screens/Inspectors.cpp
     void drawInspector();
@@ -98,7 +109,7 @@ private:
 // what editor drives
     scene::Scene& m_scene;
     render::DebugDraw& m_debug;
-    std::shared_ptr<render::Fog> m_fog;
+    std::shared_ptr<render::SkyBox> m_skybox;
     std::shared_ptr<render::GraphicsShader> m_shader;
 
     // hierarchy
@@ -113,6 +124,13 @@ private:
     // asset slots, what was picked survives between frames
     AssetFieldState m_modelField;
     AssetFieldState m_textureField;
+
+    // environment
+    Background m_background = Background::Color;
+    SkyLayout m_skyLayout = SkyLayout::Cross;
+
+    AssetFieldState m_crossField;
+    AssetFieldState m_faceFields[6];
 
     // panel
     float m_panelWidth = 340.0f;

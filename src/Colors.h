@@ -21,6 +21,9 @@ constexpr glm::vec3 AxisX = Red;
 constexpr glm::vec3 AxisY = Green;
 constexpr glm::vec3 AxisZ = Blue;
 
+// default background colors
+constexpr glm::vec3 Background = {0.050f, 0.050f, 0.080f};  // #0D0D14
+
 // editor greys, dark to light
 constexpr glm::vec3 Grey900 = {0.114f, 0.122f, 0.133f};
 constexpr glm::vec3 Grey800 = {0.153f, 0.161f, 0.173f};

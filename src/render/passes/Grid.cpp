@@ -53,15 +53,28 @@ void Grid::render(const scene::Scene& scene)
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 
+    GLboolean blendEnabled = glIsEnabled(GL_BLEND);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     m_prog->bind();
     m_prog->setMat4("uInvViewProj", glm::inverse(proj * view));
     m_prog->setMat4("uViewProj", proj * view);
     m_prog->setFloat("uNear", cam->getNear());
     m_prog->setFloat("uFar", cam->getFar());
 
+    m_prog->setVec3("uCameraPos", cam->getPosition());
+    m_prog->setFloat("uFadeStart", cam->getFar() * m_fadeStart);
+    m_prog->setFloat("uFadeEnd", cam->getFar() * m_fadeEnd);
+
     glBindVertexArray(m_Vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
+
+    if (!blendEnabled)
+    {
+        glDisable(GL_BLEND);
+    }
 
     if (!depthEnabled)
     {

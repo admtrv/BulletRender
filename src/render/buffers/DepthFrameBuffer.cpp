@@ -4,6 +4,8 @@
 
 #include "DepthFrameBuffer.h"
 
+#include "render/Renderer.h"
+
 #include <iostream>
 
 namespace BulletRender {
@@ -72,9 +74,10 @@ void DepthFrameBuffer::bind()
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 }
 
+// shadows are drawn mid frame, which may have target of its own
 void DepthFrameBuffer::unbind()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, Renderer::getTarget());
 }
 
 } // namespace render

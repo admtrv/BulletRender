@@ -8,7 +8,7 @@
 #include "render/passes/WorldAxis.h"
 #include "render/passes/Grid.h"
 #include "render/passes/Lines.h"
-#include "render/passes/Fog.h"
+#include "render/passes/SkyBox.h"
 #include "render/Renderer.h"
 #include "render/DebugDraw.h"
 #include "render/Shader.h"
@@ -29,8 +29,11 @@ int main()
     }
 
     // renderer
-    render::RenderConfig renderCfg{{0.0f, 0.0f, 0.0f, 1.0f}};
-    render::Renderer::init(renderCfg);
+    render::Renderer::init();
+
+    auto skybox = std::make_shared<render::SkyBox>(nullptr);
+    skybox->setEnabled(false);
+    render::Renderer::registerPrePass(skybox);
 
     // grid
     auto grid = std::make_shared<render::Grid>();
@@ -44,10 +47,6 @@ int main()
     auto lines = std::make_shared<render::Lines>();
     lines->setDepthTest(false);
     render::Renderer::registerOverlayPass(lines);
-
-    // fog
-    auto fog = std::make_shared<render::Fog>(true, 10.0f, 90.0f);
-    render::Renderer::registerPostPass(fog);
 
     // debug gizmos
     render::DebugDraw debug(lines);
@@ -82,7 +81,7 @@ int main()
 
     // editor
     interface::Editor editor(scene, debug);
-    editor.setFog(fog);
+    editor.setSkyBox(skybox);
     editor.setDefaultShader(shader);
     editor.setShowDebug(false);
 

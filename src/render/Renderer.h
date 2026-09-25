@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Colors.h"
 #include "Shader.h"
 #include "buffers/FrameBuffer.h"
 #include "buffers/DepthFrameBuffer.h"
@@ -35,15 +36,9 @@ class Shader;
 class IRenderPass;
 class FrameBuffer;
 
-struct RenderConfig {
-    glm::vec4 backgroundColor;
-
-    explicit RenderConfig(const glm::vec4& color = {0.05f, 0.05f, 0.08f, 1.0f}) : backgroundColor(color) {}
-};
-
 class Renderer {
 public:
-    static void init(const RenderConfig& cfg = RenderConfig());
+    static void init();
     static void clear(float r, float g, float b, float a);
     static void render(const scene::Scene& scene);
     static void renderTo(const scene::Scene& scene, FrameBuffer& target);   // same frame, into a texture of its own
@@ -56,8 +51,12 @@ public:
 
     static FrameBuffer* getSceneFrameBuffer() { return s_sceneFbo.get(); }
 
-    static const RenderConfig& getConfig() { return s_config; }
-    static void setBackgroundColor(const glm::vec4& color) { s_config.backgroundColor = color; }
+    // where frame is going, what buffer bound mid frame hands back
+    static unsigned getTarget() { return s_targetId; }
+
+    // what the frame is wiped with, a scene names its own
+    static const glm::vec4& getBackgroundColor() { return s_backgroundColor; }
+    static void setBackgroundColor(const glm::vec4& color) { s_backgroundColor = color; }
 
     // what an object with no shader of its own is drawn with
     static void setDefaultShader(std::shared_ptr<GraphicsShader> shader) { s_defaultShader = std::move(shader); }
@@ -84,8 +83,9 @@ private:
 
     // where the frame is being drawn, the window when there is none
     static FrameBuffer* s_target;
+    static unsigned s_targetId;     // zero is screen
 
-    static RenderConfig s_config;
+    static glm::vec4 s_backgroundColor;
 
     static int s_viewportWidth;
     static int s_viewportHeight;

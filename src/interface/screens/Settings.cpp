@@ -11,6 +11,8 @@
 #include "app/Window.h"
 #include "render/Renderer.h"
 
+#include <array>
+
 #include "imgui.h"
 
 namespace BulletRender {
@@ -25,16 +27,17 @@ constexpr int FRAME_LIMIT_DEFAULT = 120;        // what turning limit back on fa
 constexpr float UI_SCALE_MINIMUM = 0.8f;
 constexpr float UI_SCALE_MAXIMUM = 2.0f;
 
-// fog
-constexpr float FOG_DISTANCE_MAXIMUM = 500.0f;
+// environment
+constexpr const char* BACKGROUND_OPTIONS[] = {"Color", "Skybox"};
+constexpr const char* LAYOUT_OPTIONS[] = {"Cross", "Faces"};
+constexpr const char* FACE_LABELS[6] = {"Right", "Left", "Top", "Bottom", "Front", "Back"};
 
 void Editor::drawSettings(float dt)
 {
     drawFrameSection(dt);
     drawInterfaceSection();
-    drawBackgroundSection();
+    drawEnvironmentSection();
     drawDebugSection();
-    drawFogSection();
 }
 
 void Editor::drawFrameSection(float dt)
@@ -48,7 +51,7 @@ void Editor::drawFrameSection(float dt)
     statRow("Frame time", "%.2f ms", dt * 1000.0f);
     statRow("Aspect", "%.3f", render::Renderer::getAspect());
 
-    bool vsync = app::Window::getVSync();
+    bool vsync = app::Window::isVSync();
     if (checkboxField("VSync", vsync))
     {
         app::Window::setVSync(vsync);
@@ -96,20 +99,118 @@ void Editor::drawInterfaceSection()
     }
 }
 
-void Editor::drawBackgroundSection()
+void Editor::drawEnvironmentSection()
 {
-    if (!ImGui::CollapsingHeader("Background", ImGuiTreeNodeFlags_DefaultOpen))
+    if (!ImGui::CollapsingHeader("Environment", ImGuiTreeNodeFlags_DefaultOpen))
     {
         return;
     }
 
-    const glm::vec4& current = render::Renderer::getConfig().backgroundColor;
+    int background = int(m_background);
 
-    glm::vec3 background = glm::vec3(current);
-    if (dragColor3("Color", background))
+    if (comboField("Background", background, BACKGROUND_OPTIONS, IM_ARRAYSIZE(BACKGROUND_OPTIONS)))
     {
-        render::Renderer::setBackgroundColor(glm::vec4(background, current.a));
+        m_background = Background(background);
+        applyBackground();
     }
+
+    if (m_background == Background::Color)
+    {
+        const glm::vec4& current = render::Renderer::getBackgroundColor();
+
+        glm::vec3 color = glm::vec3(current);
+
+        if (dragColor3("Color", color))
+        {
+            render::Renderer::setBackgroundColor(glm::vec4(color, current.a));
+        }
+
+        return;
+    }
+
+    int layout = int(m_skyLayout);
+
+    if (comboField("Layout", layout, LAYOUT_OPTIONS, IM_ARRAYSIZE(LAYOUT_OPTIONS)))
+    {
+        m_skyLayout = SkyLayout(layout);
+        applyBackground();
+    }
+
+    // slot taken or emptied, either way sky is built anew from what is left
+    const auto slotChanged = [this](const char* label, AssetFieldState& slot) {
+        const bool filled = slot.path[0] != '\0';
+
+        switch (assetField(label, filled ? fileName(slot.path) : "None", filled, slot))
+        {
+            case AssetAction::Clear:
+                slot.path[0] = '\0';
+                applyBackground();
+                break;
+
+            case AssetAction::Load:
+                applyBackground();
+                break;
+
+            default:
+                break;
+        }
+    };
+
+    if (m_skyLayout == SkyLayout::Cross)
+    {
+        slotChanged("Texture", m_crossField);
+        return;
+    }
+
+    for (int face = 0; face < 6; face++)
+    {
+        slotChanged(FACE_LABELS[face], m_faceFields[face]);
+    }
+}
+
+void Editor::applyBackground()
+{
+    if (!m_skybox)
+    {
+        return;
+    }
+
+    if (m_background != Background::Skybox)
+    {
+        m_skybox->setEnabled(false);
+        return;
+    }
+
+    if (m_skyLayout == SkyLayout::Cross && m_crossField.path[0] != '\0')
+    {
+        m_skybox->setCubeMap(std::make_shared<render::CubeMap>(std::string(m_crossField.path)));
+        m_skybox->setEnabled(true);
+
+        return;
+    }
+
+    if (m_skyLayout == SkyLayout::Faces)
+    {
+        std::array<std::string, 6> faces;
+
+        for (int face = 0; face < 6; face++)
+        {
+            if (m_faceFields[face].path[0] == '\0')
+            {
+                m_skybox->setEnabled(false);
+                return;
+            }
+
+            faces[face] = m_faceFields[face].path;
+        }
+
+        m_skybox->setCubeMap(std::make_shared<render::CubeMap>(faces));
+        m_skybox->setEnabled(true);
+
+        return;
+    }
+
+    m_skybox->setEnabled(false);
 }
 
 void Editor::drawDebugSection()
@@ -146,36 +247,6 @@ void Editor::drawDebugSection()
     if (checkboxField("Cameras", cameras))
     {
         m_debug.setShowCameras(cameras);
-    }
-
-    ImGui::EndDisabled();
-}
-
-void Editor::drawFogSection()
-{
-    if (!m_fog || !ImGui::CollapsingHeader("Fog", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        return;
-    }
-
-    bool enabled = m_fog->isActive();
-    if (checkboxField("Enable fog", enabled))
-    {
-        m_fog->setEnabled(enabled);
-    }
-
-    ImGui::BeginDisabled(!enabled);
-
-    float start = m_fog->getStart();
-    float end = m_fog->getEnd();
-
-    // both rows draw every frame, short circuit makes one flicker
-    bool rangeChanged = dragScalarField("Start", start, 0.0f, end, "%.1f");
-    rangeChanged |= dragScalarField("End", end, start, FOG_DISTANCE_MAXIMUM, "%.1f");
-
-    if (rangeChanged)
-    {
-        m_fog->setRange(start, end);
     }
 
     ImGui::EndDisabled();

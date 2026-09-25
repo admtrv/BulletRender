@@ -8,6 +8,10 @@ uniform mat4 uViewProj;      // P * V
 uniform float uNear;
 uniform float uFar;
 
+uniform vec3 uCameraPos;
+uniform float uFadeStart;
+uniform float uFadeEnd;
+
 uniform vec3 uAxisXColor;
 uniform vec3 uAxisYColor;
 uniform vec3 uAxisZColor;
@@ -86,6 +90,10 @@ AxisHit evalAxis(vec3 pNear, vec3 dir, float tMax, vec3 axis, vec3 col, float th
     if (a <= 0.0)
         return H;
 
+    a *= 1.0 - smoothstep(uFadeStart, uFadeEnd, length(q - uCameraPos));
+    if (a <= 0.0)
+        return H;
+
     vec4 clip = uViewProj * vec4(q, 1.0);
     float ndcZ = clip.z / clip.w;
     H.depth01 = clamp(ndcZ * 0.5 + 0.5, 0.0, 1.0);
@@ -131,9 +139,10 @@ void main()
         bestCol = Z.col;
     }
 
-    if (bestA <= 0.0)
+    // faint fragment still writes depth and would hide what stands behind
+    if (bestA < 0.004)
         discard;
 
     gl_FragDepth = bestDepth;
-    FragColor = vec4(bestCol, 1.0);
+    FragColor = vec4(bestCol, bestA);
 }

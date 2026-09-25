@@ -4,10 +4,10 @@
 
 #include "FrameBuffer.h"
 
+#include "render/Renderer.h"
+
 namespace BulletRender {
 namespace render {
-
-unsigned FrameBuffer::s_defaultTarget = 0;
 
 FrameBuffer::FrameBuffer(int width, int height) : m_width(width), m_height(height) {
     create();
@@ -49,7 +49,8 @@ void FrameBuffer::create()
         std::cerr << "frame buffer is not complete!\n";
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // building one mid frame must not steal target frame is going into
+    unbind();
 }
 
 void FrameBuffer::destroy()
@@ -78,7 +79,7 @@ void FrameBuffer::bind()
 
 void FrameBuffer::unbind()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, s_defaultTarget);
+    glBindFramebuffer(GL_FRAMEBUFFER, Renderer::getTarget());
 }
 
 void FrameBuffer::resize(int width, int height)

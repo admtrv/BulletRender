@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <vector>
 
@@ -603,6 +604,12 @@ static bool assetSlot(const char* text, float width, char* path, size_t size, co
 
     ImGui::EndDragDropTarget();
     return dropped;
+}
+
+const char* fileName(const char* path)
+{
+    const char* slash = std::strrchr(path, '/');
+    return slash ? slash + 1 : path;
 }
 
 AssetAction assetField(const char* label, const char* current, bool filled, AssetFieldState& state, const char* dragType)

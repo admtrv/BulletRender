@@ -20,8 +20,6 @@ public:
     void unbind();
     void resize(int width, int height);
 
-    // where unbind returns to, zero is the screen
-    static void setDefaultTarget(unsigned target) { s_defaultTarget = target; }
 
     // handles
     GLuint getId() const { return m_fbo; }
@@ -42,7 +40,6 @@ private:
     int m_width = 0;
     int m_height = 0;
 
-    static unsigned s_defaultTarget;
 };
 
 } // namespace render

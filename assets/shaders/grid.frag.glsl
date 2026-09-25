@@ -8,6 +8,10 @@ uniform mat4 uViewProj;      // P * V
 uniform float uNear;         // camera near
 uniform float uFar;          // camera far
 
+uniform vec3 uCameraPos;
+uniform float uFadeStart;
+uniform float uFadeEnd;
+
 vec3 unproject(vec2 t, float z)
 {
     vec4 p = uInvViewProj * vec4(t * 2.0 - 1.0, z, 1.0);
@@ -25,9 +29,13 @@ vec4 gridColor(vec3 pos, float scale)
     vec2 g = abs(fract(coord - 0.5) - 0.5) / d;     // distance in pixels to nearest line
     float line = 1.0 - min(min(g.x, g.y), 1.0);     // 1 on line, 0 outside
 
+    // cells narrower than pixel only alias, so level bows out before they do
+    float density = max(d.x, d.y);
+    float resolved = 1.0 - smoothstep(0.5, 1.0, density);
+
     vec3 col = vec3(0.2); // base gray
 
-    return vec4(col, line);
+    return vec4(col, line * resolved);
 }
 
 void main()
@@ -61,8 +69,11 @@ void main()
         + mix(vec3(0.0),   fine.rgb,   fine.a);
     float mask = clamp(coarse.a + fine.a, 0.0, 1.0);
 
-    if (mask <= 0.0)
+    mask *= 1.0 - smoothstep(uFadeStart, uFadeEnd, length(pos - uCameraPos));
+
+    // faint fragment still writes depth and would hide what stands behind
+    if (mask < 0.004)
         discard;
 
-    FragColor = vec4(col, 1.0);
+    FragColor = vec4(col, mask);
 }

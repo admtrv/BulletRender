@@ -32,6 +32,7 @@ static void preferHighPerfGpuHint()
 }
 
 GLFWwindow *Window::s_Window = nullptr;
+std::string Window::s_title;
 double Window::s_scrollAccum = 0.0;
 bool Window::s_vsync = false;
 
@@ -68,6 +69,7 @@ bool Window::init(const WindowConfig& cfg)
     glfwWindowHint(GLFW_RESIZABLE, cfg.resizable ? GLFW_TRUE : GLFW_FALSE);
 
     s_Window = glfwCreateWindow(cfg.width, cfg.height, cfg.title.c_str(), nullptr, nullptr);
+    s_title = cfg.title;
 
     if (!s_Window)
     {
@@ -181,6 +183,27 @@ CursorMode Window::getCursorMode()
 void Window::getSize(int& width, int& height)
 {
     glfwGetFramebufferSize(s_Window, &width, &height);
+}
+
+void Window::setSize(int width, int height)
+{
+    glfwSetWindowSize(s_Window, width, height);
+}
+
+void Window::setTitle(const std::string& title)
+{
+    s_title = title;
+    glfwSetWindowTitle(s_Window, s_title.c_str());
+}
+
+bool Window::isResizable()
+{
+    return glfwGetWindowAttrib(s_Window, GLFW_RESIZABLE) == GLFW_TRUE;
+}
+
+void Window::setResizable(bool resizable)
+{
+    glfwSetWindowAttrib(s_Window, GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
 }
 
 void Window::setVSync(bool enabled)

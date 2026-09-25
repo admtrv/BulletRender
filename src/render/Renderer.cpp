@@ -17,11 +17,12 @@ std::vector<std::shared_ptr<IRenderPass>> Renderer::s_overlay;
 std::vector<std::shared_ptr<IRenderPass>> Renderer::s_post;
 std::unique_ptr<FrameBuffer> Renderer::s_sceneFbo;
 FrameBuffer* Renderer::s_target = nullptr;
+unsigned Renderer::s_targetId = 0;
 std::unique_ptr<DepthFrameBuffer> Renderer::s_dirShadowFbo;
 std::vector<std::unique_ptr<DepthFrameBuffer>> Renderer::s_spotShadowFbos;
 std::shared_ptr<GraphicsShader> Renderer::s_shadowShader;
 std::shared_ptr<GraphicsShader> Renderer::s_defaultShader;
-RenderConfig Renderer::s_config;
+glm::vec4 Renderer::s_backgroundColor{colors::Background, 1.0f};
 int Renderer::s_viewportWidth = 1;
 int Renderer::s_viewportHeight = 1;
 
@@ -140,9 +141,8 @@ static LightUniforms collectLights(const scene::Scene& scene)
     return out;
 }
 
-void Renderer::init(const RenderConfig& cfg)
+void Renderer::init()
 {
-    s_config = cfg;
     glEnable(GL_DEPTH_TEST);
 
     // create framebuffer with current window size
@@ -241,7 +241,7 @@ void Renderer::renderTo(const scene::Scene& scene, FrameBuffer& target)
 
     s_target = &target;
 
-    FrameBuffer::setDefaultTarget(target.getId());
+    s_targetId = target.getId();
     target.bind();
 
     glViewport(0, 0, target.getWidth(), target.getHeight());
@@ -249,7 +249,7 @@ void Renderer::renderTo(const scene::Scene& scene, FrameBuffer& target)
 
     render(scene);
 
-    FrameBuffer::setDefaultTarget(0);
+    s_targetId = 0;
     target.unbind();
 
     s_target = nullptr;
@@ -282,9 +282,11 @@ void Renderer::render(const scene::Scene& scene)
     if (useFramebuffer)
     {
         s_sceneFbo->bind();
-        // clear framebuffer
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
+
+    // shadow pass left its own buffers bound and cleared, frame starts here
+    glClearColor(s_backgroundColor.r, s_backgroundColor.g, s_backgroundColor.b, s_backgroundColor.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // PrePass
     for (auto& p : s_pre)

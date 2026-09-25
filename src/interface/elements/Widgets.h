@@ -143,6 +143,8 @@ struct AssetFieldState {
 
 AssetAction assetField(const char* label, const char* current, bool filled, AssetFieldState& state, const char* dragType = nullptr);
 
+const char* fileName(const char* path);
+
 // ---------------------------------------------------------------------------
 // composite
 // ---------------------------------------------------------------------------

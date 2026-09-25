@@ -43,12 +43,23 @@ public:
     static bool shouldClose();
     static void setShouldClose(bool value);
 
-    // properties
-    static void getSize(int& width, int& height);
     static bool isHovered();
 
+    // size
+    static void getSize(int& width, int& height);
+    static void setSize(int width, int height);
+
+    // title
+    static const std::string& getTitle() { return s_title; }    // glfw keeps none of its own
+    static void setTitle(const std::string& title);
+
+    // resizable
+    static bool isResizable();
+    static void setResizable(bool resizable);
+
+    // vsync
+    static bool isVSync() { return s_vsync; }
     static void setVSync(bool enabled);
-    static bool getVSync() { return s_vsync; }
 
     // cursor, captured while looking around
     static void setCursorMode(CursorMode mode);
@@ -68,6 +79,7 @@ private:
     static void scrollCallback(GLFWwindow* w, double xoffset, double yoffset);
 
     static GLFWwindow* s_Window;
+    static std::string s_title;
     static double s_scrollAccum;
     static bool s_vsync;
 };
