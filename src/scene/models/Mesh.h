@@ -16,6 +16,8 @@ struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 uv{0.0f, 0.0f};
+
+    glm::vec4 tangent{1.0f, 0.0f, 0.0f, 1.0f};      // along growing u, w says which way third axis runs
 };
 
 class Mesh {

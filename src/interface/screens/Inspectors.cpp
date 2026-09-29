@@ -6,6 +6,7 @@
 
 #include "interface/elements/Widgets.h"
 #include "Colors.h"
+#include "render/MaterialImport.h"
 #include "render/textures/TextureLoader.h"
 #include "scene/models/ModelLoader.h"
 
@@ -41,6 +42,13 @@ constexpr float ORBIT_RADIUS_MAXIMUM = 200.0f;
 // material
 constexpr float SHININESS_MINIMUM = 1.0f;
 constexpr float SHININESS_MAXIMUM = 256.0f;
+
+// uv, tiling below one stretches the picture, offset past one wraps back round
+constexpr float UV_DRAG_SPEED = 0.01f;
+constexpr float UV_SCALE_MINIMUM = 0.01f;
+constexpr float UV_SCALE_MAXIMUM = 64.0f;
+constexpr float UV_OFFSET_MINIMUM = -16.0f;
+constexpr float UV_OFFSET_MAXIMUM = 16.0f;
 
 // type names, indexed by matching enum
 static const char* const LIGHT_TYPE_NAMES[] = {"Ambient", "Directional", "Point", "Spot"};
@@ -140,7 +148,6 @@ void Editor::drawObjectInspector(scene::SceneObject& object)
     drawTransformInspector(object.getTransform());
     drawModelInspector(object);
     drawMaterialInspector(object.getMaterial());
-    drawTextureInspector(object.getMaterial());
 
     ImGui::Separator();
     if (ImGui::Button("Delete"))
@@ -458,6 +465,14 @@ void Editor::drawModelInspector(scene::SceneObject& object)
     }
 }
 
+// what each slot is called, in the order the inspector lays them out
+static const char* const SLOT_LABELS[MATERIAL_SLOT_COUNT] = {"Diffuse", "Specular", "Normal", "Emissive"};
+
+static const char* const SHADING_NAMES[] = {"Lit", "Unlit"};
+static const char* const ALPHA_NAMES[] = {"Opaque", "Mask", "Blend"};
+static const char* const FILTER_NAMES[] = {"Smooth", "Pixel"};
+static const char* const WRAP_NAMES[] = {"Repeat", "Clamp", "Mirror"};
+
 void Editor::drawMaterialInspector(render::Material& material)
 {
     if (!ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
@@ -465,74 +480,152 @@ void Editor::drawMaterialInspector(render::Material& material)
         return;
     }
 
-    // unset terms fall back to model mtl, checkbox takes term over
-    bool hasColor = material.hasColor();
-    glm::vec3 color = material.getColor();
-    if (overrideField("Color", hasColor, [&] { return dragColor3Bare(color); }))
-    {
-        hasColor ? material.setColor(color) : material.clearColor();
-    }
-
-    bool hasSpecular = material.hasSpecular();
-    glm::vec3 specular = material.getSpecular();
-    if (overrideField("Specular", hasSpecular, [&] { return dragColor3Bare(specular); }))
-    {
-        hasSpecular ? material.setSpecular(specular) : material.clearSpecular();
-    }
-
-    bool hasEmissive = material.hasEmissive();
-    glm::vec3 emissive = material.getEmissive();
-    if (overrideField("Emissive", hasEmissive, [&] { return dragColor3Bare(emissive); }))
-    {
-        hasEmissive ? material.setEmissive(emissive) : material.clearEmissive();
-    }
-
-    bool hasShininess = material.hasShininess();
-    float shininess = material.getShininess();
-    if (overrideField("Shininess", hasShininess, [&] { return dragScalarBare(shininess, SHININESS_MINIMUM, SHININESS_MAXIMUM, "%.0f"); }))
-    {
-        hasShininess ? material.setShininess(shininess) : material.clearShininess();
-    }
-
-    // tight highlight only shows at right angle, low values make specular obvious
-    if (hasShininess && ImGui::IsItemHovered())
-    {
-        ImGui::SetTooltip("low values spread the highlight, high values tighten it");
-    }
-}
-
-void Editor::drawTextureInspector(render::Material& material)
-{
-    if (!ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        return;
-    }
-
-    const auto& slots = material.getTextures();
-    const bool filled = std::any_of(slots.begin(), slots.end(), [](const render::TextureSlot& slot) { return slot.texture != nullptr; });
-
-    switch (assetField("Albedo", filled ? fileName(m_textureField.path) : "None", filled, m_textureField))
+    // naming a file fills the fields below once, nothing reads it again afterwards
+    switch (assetField("Source", m_sourceField.path[0] ? fileName(m_sourceField.path) : "None", m_sourceField.path[0] != '\0', m_sourceField))
     {
         case AssetAction::Clear:
-            material.clearTexture(render::ALBEDO_UNIFORM);
-            m_textureField.error.clear();
+            m_sourceField.path[0] = '\0';
             break;
 
         case AssetAction::Load:
-            if (auto texture = render::TextureLoader::instance().load(m_textureField.path))
-            {
-                material.setTexture(render::ALBEDO_UNIFORM, std::move(texture), render::ALBEDO_UNIT);
-                m_textureField.error.clear();
-            }
-            else
-            {
-                m_textureField.error = "failed to load " + std::string(m_textureField.path);
-            }
+            importMaterial(material, m_sourceField.path);
             break;
 
         default:
             break;
     }
+
+    int shading = int(material.shading);
+
+    if (comboField("Shading", shading, SHADING_NAMES, IM_ARRAYSIZE(SHADING_NAMES)))
+    {
+        material.shading = render::Shading(shading);
+    }
+
+    const bool lit = material.shading == render::Shading::Lit;
+
+    dragColor3("Diffuse", material.diffuse);
+    drawSlot(SLOT_LABELS[0], material.diffuseTexture, m_slotFields[0]);
+
+    // light shapes nothing on a flat picture, these terms would sit dead
+    if (lit)
+    {
+        dragColor3("Specular", material.specular);
+        drawSlot(SLOT_LABELS[1], material.specularTexture, m_slotFields[1]);
+
+        // tight highlight only shows at right angle, low values make specular obvious
+        dragScalarField("Shininess", material.shininess, SHININESS_MINIMUM, SHININESS_MAXIMUM, "%.0f");
+
+        drawSlot(SLOT_LABELS[2], material.normalTexture, m_slotFields[2]);
+    }
+
+    dragColor3("Emissive", material.emissive);
+    drawSlot(SLOT_LABELS[3], material.emissiveTexture, m_slotFields[3]);
+
+    int alpha = int(material.alphaMode);
+
+    if (comboField("Alpha Mode", alpha, ALPHA_NAMES, IM_ARRAYSIZE(ALPHA_NAMES)))
+    {
+        material.alphaMode = render::AlphaMode(alpha);
+    }
+
+    if (material.alphaMode == render::AlphaMode::Mask)
+    {
+        dragScalarField("Alpha Cutoff", material.alphaCutoff, 0.0f, 1.0f, "%.2f");
+    }
+
+    checkboxField("Double Sided", material.doubleSided);
+}
+
+// only what the file names is taken, an empty entry leaves its slot as it stands
+void Editor::importMaterial(render::Material& material, const std::string& path)
+{
+    const std::vector<render::MaterialImport> imported = render::readMtl(path);
+
+    if (imported.empty())
+    {
+        return;
+    }
+
+    const render::MaterialImport& source = imported.front();
+
+    material.diffuse = source.diffuse;
+    material.specular = source.specular;
+    material.emissive = source.emissive;
+    material.shininess = source.shininess;
+
+    const std::pair<render::TextureSlot*, const std::string*> slots[MATERIAL_SLOT_COUNT] = {
+        {&material.diffuseTexture, &source.diffuseTexture},
+        {&material.specularTexture, &source.specularTexture},
+        {&material.normalTexture, &source.normalTexture},
+        {&material.emissiveTexture, &source.emissiveTexture}
+    };
+
+    for (int slot = 0; slot < MATERIAL_SLOT_COUNT; slot++)
+    {
+        auto& [target, texturePath] = slots[slot];
+
+        target->texture = texturePath->empty() ? nullptr : render::TextureLoader::instance().load(*texturePath);
+
+        std::snprintf(m_slotFields[slot].path, sizeof(m_slotFields[slot].path), "%s", texturePath->c_str());
+    }
+}
+
+// one picture with how it is read and what part of it is taken
+void Editor::drawSlot(const char* label, render::TextureSlot& slot, AssetFieldState& state)
+{
+    ImGui::PushID(label);
+
+    switch (assetField(label, slot.empty() ? "None" : fileName(state.path), !slot.empty(), state))
+    {
+        case AssetAction::Clear:
+            slot.texture.reset();
+            state.error.clear();
+            break;
+
+        case AssetAction::Load:
+            slot.texture = render::TextureLoader::instance().load(state.path);
+            state.error = slot.texture ? std::string{} : "failed to load " + std::string(state.path);
+            break;
+
+        default:
+            break;
+    }
+
+    // settings belong to what was taken, an empty slot has nothing to read
+    if (!slot.empty())
+    {
+        ImGui::Indent();
+
+        int filter = int(slot.sampler.filter);
+
+        if (comboField("Filter", filter, FILTER_NAMES, IM_ARRAYSIZE(FILTER_NAMES)))
+        {
+            slot.sampler.filter = render::TextureFilter(filter);
+        }
+
+        int wrapU = int(slot.sampler.wrapU);
+        int wrapV = int(slot.sampler.wrapV);
+
+        if (comboField("Wrap U", wrapU, WRAP_NAMES, IM_ARRAYSIZE(WRAP_NAMES)))
+        {
+            slot.sampler.wrapU = render::TextureWrap(wrapU);
+        }
+
+        if (comboField("Wrap V", wrapV, WRAP_NAMES, IM_ARRAYSIZE(WRAP_NAMES)))
+        {
+            slot.sampler.wrapV = render::TextureWrap(wrapV);
+        }
+
+        dragVector2("Tiling", slot.uvScale, UV_DRAG_SPEED, UV_SCALE_MINIMUM, UV_SCALE_MAXIMUM, "%.2f");
+        dragVector2("Offset", slot.uvOffset, UV_DRAG_SPEED, UV_OFFSET_MINIMUM, UV_OFFSET_MAXIMUM, "%.2f");
+
+        ImGui::Unindent();
+    }
+
+    errorText(state.error);
+
+    ImGui::PopID();
 }
 
 } // namespace interface

@@ -34,6 +34,12 @@ static constexpr int MAX_SPOT_SHADOW_MAPS = 3;
 static constexpr int MAX_POINT_LIGHTS = 3;
 static constexpr int MAX_SPOT_LIGHTS = 3;
 
+// one unit per material slot, shadow maps sit above them
+static constexpr unsigned DIFFUSE_UNIT = 0;
+static constexpr unsigned SPECULAR_UNIT = 1;
+static constexpr unsigned NORMAL_UNIT = 2;
+static constexpr unsigned EMISSIVE_UNIT = 3;
+
 // shadow map texture units, kept above any user-bound albedo
 static constexpr unsigned DIR_SHADOW_UNIT = 8;
 static constexpr unsigned SPOT_SHADOW_BASE_UNIT = 9; // 9, 10, 11 for 3 spots
@@ -393,6 +399,66 @@ void Renderer::renderShadowPass(const scene::Scene& scene)
     }
 }
 
+static GLenum toGl(TextureWrap wrap)
+{
+    switch (wrap)
+    {
+        case TextureWrap::Clamp:  return GL_CLAMP_TO_EDGE;
+        case TextureWrap::Mirror: return GL_MIRRORED_REPEAT;
+        default:                  return GL_REPEAT;
+    }
+}
+
+// nearest has no mipmaps to walk, and only a texture built with them may ask for any
+static void applySampler(Texture2D& texture, const Sampler& sampler)
+{
+    const bool pixel = sampler.filter == TextureFilter::Pixel;
+
+    GLenum min = pixel ? GL_NEAREST : GL_LINEAR;
+
+    if (texture.hasMipmaps())
+    {
+        min = pixel ? GL_NEAREST_MIPMAP_NEAREST : GL_LINEAR_MIPMAP_LINEAR;
+    }
+
+    texture.setFilter(min, pixel ? GL_NEAREST : GL_LINEAR);
+    texture.setWrap(toGl(sampler.wrapU), toGl(sampler.wrapV));
+}
+
+// what one material slot is called on the shader side
+struct SlotUniforms {
+    const char* sampler;
+    const char* has;
+    const char* offset;
+    const char* scale;
+    const char* flip;
+    unsigned unit;
+};
+
+constexpr SlotUniforms DIFFUSE_SLOT{"uDiffuseMap", "uHasDiffuseMap", "uDiffuseOffset", "uDiffuseScale", "uDiffuseFlip", DIFFUSE_UNIT};
+constexpr SlotUniforms SPECULAR_SLOT{"uSpecularMap", "uHasSpecularMap", "uSpecularOffset", "uSpecularScale", "uSpecularFlip", SPECULAR_UNIT};
+constexpr SlotUniforms NORMAL_SLOT{"uNormalMap", "uHasNormalMap", "uNormalOffset", "uNormalScale", "uNormalFlip", NORMAL_UNIT};
+constexpr SlotUniforms EMISSIVE_SLOT{"uEmissiveMap", "uHasEmissiveMap", "uEmissiveOffset", "uEmissiveScale", "uEmissiveFlip", EMISSIVE_UNIT};
+
+// empty slot still says so, shader falls back to the plain colour
+static void bindSlot(GraphicsShader& shader, const TextureSlot& slot, const SlotUniforms& uniforms)
+{
+    shader.setInt(uniforms.has, slot.empty() ? 0 : 1);
+
+    if (slot.empty())
+    {
+        return;
+    }
+
+    slot.texture->bind(uniforms.unit);
+    applySampler(*slot.texture, slot.sampler);
+
+    shader.setInt(uniforms.sampler, int(uniforms.unit));
+    shader.setVec2(uniforms.offset, slot.uvOffset);
+    shader.setVec2(uniforms.scale, slot.uvScale);
+    shader.setVec2(uniforms.flip, {slot.sampler.flipU ? 1.0f : 0.0f, slot.sampler.flipV ? 1.0f : 0.0f});
+}
+
 static void applyLights(GraphicsShader& shader, const LightUniforms& lights)
 {
     shader.setVec3("uAmbientColor", lights.ambientColor);
@@ -487,8 +553,8 @@ void Renderer::renderBasePass(const scene::Scene& scene)
     };
 
     std::stable_sort(queue.begin(), queue.end(), [&distance](const scene::SceneObject* left, const scene::SceneObject* right) {
-        const bool leftBlends = left->getMaterial().isTransparent();
-        const bool rightBlends = right->getMaterial().isTransparent();
+        const bool leftBlends = left->getMaterial().isBlended();
+        const bool rightBlends = right->getMaterial().isBlended();
 
         // solid ones keep order they came in, only blended ones need sorting
         if (leftBlends != rightBlends)
@@ -504,7 +570,7 @@ void Renderer::renderBasePass(const scene::Scene& scene)
     for (const scene::SceneObject* object : queue)
     {
         // blended ones still write depth, passes reading it would lose them otherwise
-        if (!blending && object->getMaterial().isTransparent())
+        if (!blending && object->getMaterial().isBlended())
         {
             blending = true;
 
@@ -512,135 +578,59 @@ void Renderer::renderBasePass(const scene::Scene& scene)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
 
-        const scene::Model* model = object->getModel().get();
-        if (!model)
+        const Material& material = object->getMaterial();
+        const std::shared_ptr<GraphicsShader> shader = material.shader ? material.shader : s_defaultShader;
+
+        if (!shader)
         {
             continue;
         }
 
-        const Material& objectMaterial = object->getMaterial();
-
-        const auto& meshes = model->getMeshes();
-        for (size_t meshIdx = 0; meshIdx < meshes.size(); meshIdx++)
+        // surface seen from inside shows backs of its faces
+        if (material.doubleSided)
         {
-            int matId = model->getMeshMaterialIndex(meshIdx);
-            const Material* meshMaterial = nullptr;
-            if (matId >= 0 && static_cast<size_t>(matId) < model->getMaterials().size())
-            {
-                meshMaterial = model->getMaterials()[matId].get();
-            }
+            glDisable(GL_CULL_FACE);
+        }
+        else
+        {
+            glEnable(GL_CULL_FACE);
+        }
 
-            // shader: object override > model material > default
-            auto shader = objectMaterial.getShader();
+        shader->bind();
+        shader->setMat4("uView", cam->getView());
+        shader->setMat4("uProj", cam->getProj(Renderer::getAspect()));
+        shader->setMat4("uModel", object->getTransform().getMatrix());
+        shader->setMat3("uNormalMatrix", object->getTransform().getNormalMatrix());
+        shader->setVec3("uCameraPos", cam->getPosition());
 
-            if (!shader && meshMaterial)
-            {
-                shader = meshMaterial->getShader();
-            }
+        applyLights(*shader, lights);
+        bindShadowMaps(*shader);
 
-            if (!shader)
-            {
-                shader = s_defaultShader;
-            }
+        shader->setVec3("uDiffuse", material.diffuse);
+        shader->setVec3("uSpecular", material.specular);
+        shader->setFloat("uShininess", material.shininess);
+        shader->setVec3("uEmissive", material.emissive);
 
-            // nothing draws without one
-            if (!shader)
-            {
-                continue;
-            }
+        shader->setVec2("uFrameScale", object->getFrameScale());
+        shader->setVec2("uFrameOffset", object->getFrameOffset());
 
-            shader->bind();
-            shader->setMat4("uView", cam->getView());
-            shader->setMat4("uProj", cam->getProj(Renderer::getAspect()));
-            shader->setMat4("uModel", object->getTransform().getMatrix());
-            shader->setMat3("uNormalMatrix", object->getTransform().getNormalMatrix());
-            shader->setVec3("uCameraPos", cam->getPosition());
-            applyLights(*shader, lights);
-            bindShadowMaps(*shader);
+        shader->setInt("uUnlit", material.shading == Shading::Unlit ? 1 : 0);
+        shader->setInt("uAlphaMask", material.alphaMode == AlphaMode::Mask ? 1 : 0);
+        shader->setFloat("uAlphaCutoff", material.alphaCutoff);
 
-            // color (kd): object override > model material > white
-            glm::vec3 color(1.0f);
-            if (objectMaterial.hasColor())
-            {
-                color = objectMaterial.getColor();
-            }
-            else if (meshMaterial && meshMaterial->hasColor())
-            {
-                color = meshMaterial->getColor();
-            }
-            shader->setVec3("uColor", color);
+        bindSlot(*shader, material.diffuseTexture, DIFFUSE_SLOT);
+        bindSlot(*shader, material.specularTexture, SPECULAR_SLOT);
+        bindSlot(*shader, material.normalTexture, NORMAL_SLOT);
+        bindSlot(*shader, material.emissiveTexture, EMISSIVE_SLOT);
 
-            // specular (ks): object override > model material > default 0.5
-            glm::vec3 specColor(0.5f);
-            if (objectMaterial.hasSpecular())
-            {
-                specColor = objectMaterial.getSpecular();
-            }
-            else if (meshMaterial && meshMaterial->hasSpecular())
-            {
-                specColor = meshMaterial->getSpecular();
-            }
-            shader->setVec3("uMatSpecular", specColor);
-
-            // shininess (ns): object override > model material > default 32
-            float shininess = 32.0f;
-            if (objectMaterial.hasShininess())
-            {
-                shininess = objectMaterial.getShininess();
-            }
-            else if (meshMaterial && meshMaterial->hasShininess())
-            {
-                shininess = meshMaterial->getShininess();
-            }
-            shader->setFloat("uMatShininess", shininess);
-
-            // emissive (ke): object override > model material > black
-            glm::vec3 emissive(0.0f);
-            if (objectMaterial.hasEmissive())
-            {
-                emissive = objectMaterial.getEmissive();
-            }
-            else if (meshMaterial && meshMaterial->hasEmissive())
-            {
-                emissive = meshMaterial->getEmissive();
-            }
-            shader->setVec3("uMatEmissive", emissive);
-
-            // textures: object override first, then mesh material as fallback
-            bool hasAlbedo = false;
-            bool hasSpecMap = false;
-            for (const auto& slot : objectMaterial.getTextures())
-            {
-                if (!slot.texture)
-                {
-                    continue;
-                }
-                slot.texture->bind(slot.unit);
-                shader->setInt(slot.uniformName.c_str(), static_cast<int>(slot.unit));
-                if (slot.uniformName == "uAlbedo") hasAlbedo = true;
-                if (slot.uniformName == "uSpecularMap") hasSpecMap = true;
-            }
-            if (meshMaterial)
-            {
-                for (const auto& slot : meshMaterial->getTextures())
-                {
-                    if (!slot.texture) continue;
-                    if (hasAlbedo && slot.uniformName == "uAlbedo") continue;
-                    if (hasSpecMap && slot.uniformName == "uSpecularMap") continue;
-
-                    slot.texture->bind(slot.unit);
-                    shader->setInt(slot.uniformName.c_str(), static_cast<int>(slot.unit));
-                    if (slot.uniformName == "uAlbedo") hasAlbedo = true;
-                    if (slot.uniformName == "uSpecularMap") hasSpecMap = true;
-                }
-            }
-            shader->setInt("uHasAlbedo", hasAlbedo ? 1 : 0);
-            shader->setInt("uUnlit", objectMaterial.isUnlit() ? 1 : 0);
-            shader->setInt("uHasSpecMap", hasSpecMap ? 1 : 0);
-
-            meshes[meshIdx].draw();
+        for (const scene::Mesh& mesh : object->getModel()->getMeshes())
+        {
+            mesh.draw();
         }
     }
+
+    // culling is a material's own business, pass leaves it as it found it
+    glEnable(GL_CULL_FACE);
 
     // restore whatever blended run turned on
     if (blending)

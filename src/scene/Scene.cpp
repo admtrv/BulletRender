@@ -9,6 +9,12 @@
 namespace BulletRender {
 namespace scene {
 
+void SceneObject::setFrame(const glm::vec2& scale, const glm::vec2& offset)
+{
+    m_frameScale = scale;
+    m_frameOffset = offset;
+}
+
 void SceneObject::setParent(SceneObject* parent, bool keepWorld)
 {
     m_transform.setParent(parent != nullptr ? &parent->m_transform : nullptr, keepWorld);

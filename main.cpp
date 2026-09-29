@@ -76,7 +76,7 @@ int main()
     // default cube
     auto cubeModel = std::make_shared<scene::Box>(1.0f, 1.0f, 1.0f);
     scene::SceneObject* cube = scene.addObject(cubeModel, "Cube");
-    cube->getMaterial().setShader(shader);
+    cube->getMaterial().shader = shader;
     cube->getTransform().setLocalPosition({0.0f, 0.0f, 0.0f});
 
     // editor

@@ -6,17 +6,46 @@
 in vec3 vWorldPos;
 in vec3 vNor;
 in vec2 vUv;
+in vec4 vTan;
 
-uniform vec3 uColor;
-uniform sampler2D uAlbedo;
-uniform int uHasAlbedo;
 uniform int uUnlit;
 
-uniform vec3 uMatSpecular;
-uniform float uMatShininess;
-uniform vec3 uMatEmissive;
+// cell of a sheet this object shows, whole picture when it shows no sheet
+uniform vec2 uFrameScale;
+uniform vec2 uFrameOffset;
+
+// alpha a picture carries is either ignored, cut at a threshold, or blended
+uniform int uAlphaMask;
+uniform float uAlphaCutoff;
+
+// each slot samples its own window of its own picture
+uniform vec3 uDiffuse;
+uniform sampler2D uDiffuseMap;
+uniform int uHasDiffuseMap;
+uniform vec2 uDiffuseOffset;
+uniform vec2 uDiffuseScale;
+uniform vec2 uDiffuseFlip;
+
+uniform vec3 uSpecular;
+uniform float uShininess;
 uniform sampler2D uSpecularMap;
-uniform int uHasSpecMap;
+uniform int uHasSpecularMap;
+uniform vec2 uSpecularOffset;
+uniform vec2 uSpecularScale;
+uniform vec2 uSpecularFlip;
+
+uniform sampler2D uNormalMap;
+uniform int uHasNormalMap;
+uniform vec2 uNormalOffset;
+uniform vec2 uNormalScale;
+uniform vec2 uNormalFlip;
+
+uniform vec3 uEmissive;
+uniform sampler2D uEmissiveMap;
+uniform int uHasEmissiveMap;
+uniform vec2 uEmissiveOffset;
+uniform vec2 uEmissiveScale;
+uniform vec2 uEmissiveFlip;
 
 uniform vec3 uCameraPos;
 
@@ -63,10 +92,10 @@ float attenuate(float dist, float range)
 }
 
 // phong (diffuse + specular) for a single light source, with per-material ks/ns
-vec3 phong(vec3 N, vec3 V, vec3 L, vec3 lightColor, vec3 baseColor, vec3 specColor, float shininess)
+vec3 phong(vec3 N, vec3 V, vec3 L, vec3 lightColor, vec3 surface, vec3 specColor, float shininess)
 {
     float ndl = max(dot(N, L), 0.0);
-    vec3 diffuse = baseColor * lightColor * ndl;
+    vec3 diffuse = surface * lightColor * ndl;
 
     vec3 R = reflect(-L, N);
     float spec = pow(max(dot(R, V), 0.0), max(shininess, 1.0));
@@ -101,37 +130,68 @@ float sampleShadow(sampler2D shadowMap, vec4 lightSpacePos, float ndl)
     return shadow / 9.0;
 }
 
+// flip first, so window names same corner either way round, then frame cuts to one cell
+vec2 slotUv(vec2 offset, vec2 scale, vec2 flip)
+{
+    return (mix(vUv, 1.0 - vUv, flip) * scale + offset) * uFrameScale + uFrameOffset;
+}
+
+// map holds the detail in the surface's own frame, tbn carries it out to the world
+vec3 mappedNormal(vec3 normal)
+{
+    vec3 tangent = normalize(vTan.xyz - normal * dot(normal, vTan.xyz));
+    vec3 bitangent = cross(normal, tangent) * vTan.w;
+
+    vec3 sampled = texture(uNormalMap, slotUv(uNormalOffset, uNormalScale, uNormalFlip)).rgb * 2.0 - 1.0;
+
+    return normalize(mat3(tangent, bitangent, normal) * sampled);
+}
+
 void main()
 {
     vec3 N = normalize(vNor);
+
+    if (uHasNormalMap != 0)
+    {
+        N = mappedNormal(N);
+    }
     vec3 V = normalize(uCameraPos - vWorldPos);
 
-    // kd, diffuse base (color * map_Kd)
-    vec3 base = uColor;
+    vec3 base = uDiffuse;
     float alpha = 1.0;
 
-    if (uHasAlbedo != 0)
+    if (uHasDiffuseMap != 0)
     {
-        vec4 albedo = texture(uAlbedo, vUv);
+        vec4 sampled = texture(uDiffuseMap, slotUv(uDiffuseOffset, uDiffuseScale, uDiffuseFlip));
 
-        base *= albedo.rgb;
-        alpha = albedo.a;
-
-        // what is barely there is dropped, so depth stays true for passes that read it
-        if (alpha < 0.01) discard;
+        base *= sampled.rgb;
+        alpha = sampled.a;
     }
 
-    // ks, specular color (material * map_Ks)
-    vec3 specColor = uMatSpecular;
-    if (uHasSpecMap != 0)
+    // masked surface keeps a pixel whole or drops it whole, nothing between
+    if (uAlphaMask != 0 && alpha < uAlphaCutoff) discard;
+
+    // what is barely there is dropped, so depth stays true for passes that read it
+    if (alpha < 0.01) discard;
+
+    vec3 specColor = uSpecular;
+
+    if (uHasSpecularMap != 0)
     {
-        specColor *= texture(uSpecularMap, vUv).rgb;
+        specColor *= texture(uSpecularMap, slotUv(uSpecularOffset, uSpecularScale, uSpecularFlip)).rgb;
     }
 
-    float shininess = uMatShininess;
+    float shininess = uShininess;
+
+    vec3 emissive = uEmissive;
+
+    if (uHasEmissiveMap != 0)
+    {
+        emissive *= texture(uEmissiveMap, slotUv(uEmissiveOffset, uEmissiveScale, uEmissiveFlip)).rgb;
+    }
 
     // ambient + emissive
-    vec3 color = base * uAmbientColor + uMatEmissive;
+    vec3 color = base * uAmbientColor + emissive;
 
     // directional
     if (uHasDirLight != 0)
@@ -182,5 +242,5 @@ void main()
     }
 
     // flat picture carries its own shading, light would only dull it
-    FragColor = vec4(uUnlit != 0 ? base : color, alpha);
+    FragColor = vec4(uUnlit != 0 ? base + emissive : color, alpha);
 }

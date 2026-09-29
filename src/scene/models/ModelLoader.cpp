@@ -4,6 +4,9 @@
 
 #include "ModelLoader.h"
 
+#include "ObjLoader.h"
+
+#include <filesystem>
 #include <iostream>
 
 namespace BulletRender {
@@ -45,17 +48,18 @@ void ModelLoader::clear()
     m_cache.clear();
 }
 
+// one loader per format, picked by what the file is named
 std::shared_ptr<Model> ModelLoader::loadFromDisk(const std::string& path)
 {
-    auto model = std::make_shared<Model>();
+    const std::string extension = std::filesystem::path(path).extension().string();
 
-    if (!model->loadObj(path))
+    if (extension == ".obj" || extension == ".OBJ")
     {
-        std::cerr << "model load failed: " << path << '\n';
-        return nullptr;
+        return ObjLoader::load(path);
     }
 
-    return model;
+    std::cerr << "no loader for model: " << path << '\n';
+    return nullptr;
 }
 
 } // namespace scene

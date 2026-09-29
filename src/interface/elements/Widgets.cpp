@@ -45,19 +45,19 @@ static const char* const CHANNEL_NAMES[AXIS_COUNT] = {"r", "g", "b"};
 static const glm::vec3 AXIS_COLORS[AXIS_COUNT] = {colors::AxisX, colors::AxisY, colors::AxisZ};
 static const glm::vec3 CHANNEL_COLORS[AXIS_COUNT] = {colors::Red, colors::Green, colors::Blue};
 
-// three tagged cells side by side, control draws what sits in each
+// tagged cells side by side, control draws what sits in each
 //
 // x 0.00   y 0.00   z 0.00
 template <class Cell>
-static bool taggedRow(const char* const names[AXIS_COUNT], const glm::vec3 tints[AXIS_COUNT], float width, Cell cell)
+static bool taggedRow(const char* const names[], const glm::vec3 tints[], int count, float width, Cell cell)
 {
     const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-    const float cellWidth = (width - spacing * 2.0f) / AXIS_COUNT;
+    const float cellWidth = (width - spacing * float(count - 1)) / float(count);
 
-    // widest tag sets offset for all three, otherwise narrower glyph
+    // widest tag sets offset for all of them, otherwise narrower glyph
     // lets its field start earlier and columns drift apart
     float tagWidth = 0.0f;
-    for (int component = 0; component < AXIS_COUNT; component++)
+    for (int component = 0; component < count; component++)
     {
         tagWidth = std::max(tagWidth, ImGui::CalcTextSize(names[component]).x);
     }
@@ -67,7 +67,7 @@ static bool taggedRow(const char* const names[AXIS_COUNT], const glm::vec3 tints
 
     bool changed = false;
 
-    for (int component = 0; component < AXIS_COUNT; component++)
+    for (int component = 0; component < count; component++)
     {
         ImGui::PushID(component);
 
@@ -85,7 +85,7 @@ static bool taggedRow(const char* const names[AXIS_COUNT], const glm::vec3 tints
 
         ImGui::PopID();
 
-        if (component < AXIS_COUNT - 1)
+        if (component < count - 1)
         {
             ImGui::SameLine();
         }
@@ -95,10 +95,10 @@ static bool taggedRow(const char* const names[AXIS_COUNT], const glm::vec3 tints
 }
 
 // same row filled with drags, what vectors and colors both come down to
-static bool dragComponents(glm::vec3& value, const char* const names[AXIS_COUNT], const glm::vec3 tints[AXIS_COUNT],
+static bool dragComponents(float* value, const char* const names[], const glm::vec3 tints[], int count,
                            float speed, float min, float max, const char* format, float width)
 {
-    return taggedRow(names, tints, width, [&](int component, float cellWidth) {
+    return taggedRow(names, tints, count, width, [&](int component, float cellWidth) {
         ImGui::SetNextItemWidth(cellWidth);
         return ImGui::DragFloat("##value", &value[component], speed, min, max, format);
     });
@@ -111,7 +111,7 @@ static bool colorComponents(glm::vec3& color)
     const float swatchWidth = ImGui::GetFrameHeight();
 
     // swatch sits at end of row, fields give up its width up front
-    bool changed = dragComponents(color, CHANNEL_NAMES, CHANNEL_COLORS, COLOR_DRAG_SPEED, 0.0f, 1.0f, "%.2f",
+    bool changed = dragComponents(&color.x, CHANNEL_NAMES, CHANNEL_COLORS, AXIS_COUNT, COLOR_DRAG_SPEED, 0.0f, 1.0f, "%.2f",
                                   ImGui::GetContentRegionAvail().x - swatchWidth - spacing);
 
     ImGui::SameLine(0.0f, spacing);
@@ -302,11 +302,20 @@ bool dragVector3(const char* label, glm::vec3& value, float speed, float min, fl
     ImGui::PushID(label);
     ImGui::TextUnformatted(label);
 
-    const bool changed = dragComponents(value, AXIS_NAMES, AXIS_COLORS, speed, min, max, format,
+    const bool changed = dragComponents(&value.x, AXIS_NAMES, AXIS_COLORS, AXIS_COUNT, speed, min, max, format,
                                         ImGui::GetContentRegionAvail().x);
 
     ImGui::PopID();
     return changed;
+}
+
+// two cells fit beside the caption, where three would crowd it onto its own row
+bool dragVector2(const char* label, glm::vec2& value, float speed, float min, float max, const char* format)
+{
+    return labeledField(label, [&] {
+        return dragComponents(&value.x, AXIS_NAMES, AXIS_COLORS, 2, speed, min, max, format,
+                              ImGui::GetContentRegionAvail().x);
+    });
 }
 
 bool checkboxAxes(const char* label, bool& x, bool& y, bool& z)
@@ -317,7 +326,7 @@ bool checkboxAxes(const char* label, bool& x, bool& y, bool& z)
     ImGui::TextUnformatted(label);
 
     // same cells vector rows use, so toggles line up under them
-    const bool changed = taggedRow(AXIS_NAMES, AXIS_COLORS, ImGui::GetContentRegionAvail().x, [&](int axis, float) {
+    const bool changed = taggedRow(AXIS_NAMES, AXIS_COLORS, AXIS_COUNT, ImGui::GetContentRegionAvail().x, [&](int axis, float) {
         return ImGui::Checkbox("##axis", axes[axis]);
     });
 

@@ -65,6 +65,7 @@ bool bitsField(const char* label, unsigned& value, int count);          // grid 
 //   x 0.00   y 0.00   z 0.00
 // ---------------------------------------------------------------------------
 
+bool dragVector2(const char* label, glm::vec2& value, float speed, float min, float max, const char* format);
 bool dragVector3(const char* label, glm::vec3& value, float speed, float min, float max, const char* format);
 bool checkboxAxes(const char* label, bool& x, bool& y, bool& z);        // three toggles, one per axis
 bool dragColor3(const char* label, glm::vec3& color);                   // same plus swatch that opens picker

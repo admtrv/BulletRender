@@ -184,10 +184,14 @@ void Canvas::render(const scene::Scene&)
     // flat layer sits over frame, ignoring depth scene left behind
     const GLboolean depthEnabled = glIsEnabled(GL_DEPTH_TEST);
     const GLboolean blendEnabled = glIsEnabled(GL_BLEND);
+    const GLboolean cullEnabled = glIsEnabled(GL_CULL_FACE);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // quads wind clockwise under y running down, which gl reads as facing away
+    glDisable(GL_CULL_FACE);
 
     m_program->bind();
     m_program->setMat4("uProj", proj);
@@ -216,6 +220,10 @@ void Canvas::render(const scene::Scene&)
     if (!blendEnabled)
     {
         glDisable(GL_BLEND);
+    }
+    if (cullEnabled)
+    {
+        glEnable(GL_CULL_FACE);
     }
 }
 

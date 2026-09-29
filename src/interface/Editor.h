@@ -34,6 +34,8 @@ struct Selection {
     bool is(SelectionType t, size_t i) const { return type == t && index == i; }
 };
 
+inline constexpr int MATERIAL_SLOT_COUNT = 4;
+
 // what stands behind scene
 enum class Background : uint8_t {
     Color,
@@ -104,7 +106,8 @@ private:
     void drawTransformInspector(scene::Transform& transform);
     void drawModelInspector(scene::SceneObject& object);
     void drawMaterialInspector(render::Material& material);
-    void drawTextureInspector(render::Material& material);
+    void drawSlot(const char* label, render::TextureSlot& slot, AssetFieldState& state);
+    void importMaterial(render::Material& material, const std::string& path);
 
 // what editor drives
     scene::Scene& m_scene;
@@ -123,7 +126,8 @@ private:
 
     // asset slots, what was picked survives between frames
     AssetFieldState m_modelField;
-    AssetFieldState m_textureField;
+    AssetFieldState m_slotFields[MATERIAL_SLOT_COUNT];
+    AssetFieldState m_sourceField;      // .mtl the material was filled from
 
     // environment
     Background m_background = Background::Color;

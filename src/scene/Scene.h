@@ -39,6 +39,11 @@ public:
     render::Material& getMaterial() { return m_material; }
     const render::Material& getMaterial() const { return m_material; }
 
+    // frame, part of picture shown, on object since materials are shared
+    const glm::vec2& getFrameScale() const { return m_frameScale; }
+    const glm::vec2& getFrameOffset() const { return m_frameOffset; }
+    void setFrame(const glm::vec2& scale, const glm::vec2& offset);
+
     // hierarchy shortcuts
     void setParent(SceneObject* parent, bool keepWorld = true);
     void addChild(SceneObject* child, bool keepWorld = true);
@@ -50,6 +55,9 @@ private:
     Transform m_transform;
     render::Material m_material;
     bool m_visible = true;
+
+    glm::vec2 m_frameScale{1.0f};
+    glm::vec2 m_frameOffset{0.0f};
 };
 
 

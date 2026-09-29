@@ -24,6 +24,8 @@ Until now it grew on its own, in a vacuum, though always with the game engine in
 
 ## Dependencies
 
+Requires C++20 and an OpenGL-capable graphics stack.
+
 System libraries, expected to be installed:
 
 - **OpenGL**

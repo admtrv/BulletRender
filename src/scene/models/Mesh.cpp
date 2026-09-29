@@ -40,6 +40,10 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned>& ind
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void*) offsetof(Vertex,uv));
 
+    // attribute 3 - tangent
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3,4,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void*) offsetof(Vertex,tangent));
+
     // end vao tuning
     glBindVertexArray(0);
 }

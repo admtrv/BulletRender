@@ -345,7 +345,7 @@ void Editor::drawCreateMenu()
 scene::SceneObject* Editor::spawnObject(std::shared_ptr<scene::Model> model, const std::string& name)
 {
     scene::SceneObject* object = m_scene.addObject(std::move(model), name);
-    object->getMaterial().setShader(m_shader);
+    object->getMaterial().shader = m_shader;
 
     m_selection = {SelectionType::Object, m_scene.getObjects().size() - 1};
     return object;

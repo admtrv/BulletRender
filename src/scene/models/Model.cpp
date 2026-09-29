@@ -4,268 +4,80 @@
 
 #include "Model.h"
 
-#include "render/textures/TextureLoader.h"
-
 #include <glm/gtc/constants.hpp>
 
-#include <filesystem>
-
-namespace BulletRender {
-namespace scene {
+#include <cmath>
 
 // squared length below this carries no direction
 constexpr float LENGTH2_EPSILON = 1e-20f;
 
-// key for unique vertex - triplet of position, normal and uv indices
-struct VNKey {
-    int vertexIdx = -1;
-    int normalIdx = -1;
-    int texcoordIdx = -1;
+namespace BulletRender {
+namespace scene {
 
-    bool operator==(const VNKey& other) const noexcept
-    {
-        return vertexIdx == other.vertexIdx
-            && normalIdx == other.normalIdx
-            && texcoordIdx == other.texcoordIdx;
-    }
-};
-
-struct VNKeyHash {
-    size_t operator()(const VNKey& key) const noexcept
-    {
-        size_t h = static_cast<size_t>(static_cast<uint32_t>(key.vertexIdx));
-        h = (h * 31) ^ static_cast<size_t>(static_cast<uint32_t>(key.normalIdx));
-        h = (h * 31) ^ static_cast<size_t>(static_cast<uint32_t>(key.texcoordIdx));
-        return h;
-    }
-};
-
-static glm::vec3 safeNormalize(const glm::vec3& vector)
+// normal map is read along u, which uv layout over triangle decides
+static void buildTangents(std::vector<Vertex>& vertices, const std::vector<unsigned>& indices)
 {
-    float len2 = glm::dot(vector, vector);
+    std::vector<glm::vec3> along(vertices.size(), glm::vec3(0.0f));
+    std::vector<glm::vec3> across(vertices.size(), glm::vec3(0.0f));
 
-    if (len2 <= LENGTH2_EPSILON)
+    for (size_t i = 0; i + 2 < indices.size(); i += 3)
     {
-        return glm::vec3(0.0f, 0.0f, 1.0f);
+        const Vertex& first = vertices[indices[i + 0]];
+        const Vertex& second = vertices[indices[i + 1]];
+        const Vertex& third = vertices[indices[i + 2]];
+
+        const glm::vec3 edge1 = second.position - first.position;
+        const glm::vec3 edge2 = third.position - first.position;
+
+        const glm::vec2 uv1 = second.uv - first.uv;
+        const glm::vec2 uv2 = third.uv - first.uv;
+
+        const float determinant = uv1.x * uv2.y - uv2.x * uv1.y;
+
+        // uv collapsed to a line or a point says nothing about direction
+        if (std::abs(determinant) < 1e-12f)
+        {
+            continue;
+        }
+
+        const float scale = 1.0f / determinant;
+
+        const glm::vec3 tangent = (edge1 * uv2.y - edge2 * uv1.y) * scale;
+        const glm::vec3 bitangent = (edge2 * uv1.x - edge1 * uv2.x) * scale;
+
+        for (size_t corner = 0; corner < 3; corner++)
+        {
+            along[indices[i + corner]] += tangent;
+            across[indices[i + corner]] += bitangent;
+        }
     }
 
-    return vector * glm::inversesqrt(len2);
+    for (size_t i = 0; i < vertices.size(); i++)
+    {
+        const glm::vec3 normal = vertices[i].normal;
+
+        // gram-schmidt, what is left of the tangent once it stops leaning on the normal
+        glm::vec3 tangent = along[i] - normal * glm::dot(normal, along[i]);
+
+        if (glm::dot(tangent, tangent) <= LENGTH2_EPSILON)
+        {
+            tangent = std::abs(normal.x) < 0.9f ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+            tangent -= normal * glm::dot(normal, tangent);
+        }
+
+        tangent = glm::normalize(tangent);
+
+        // mirrored uv turns the third axis round, the sign carries that to the shader
+        const float sign = glm::dot(glm::cross(normal, tangent), across[i]) < 0.0f ? -1.0f : 1.0f;
+
+        vertices[i].tangent = glm::vec4(tangent, sign);
+    }
 }
 
-// .mtl -> Material conversion: phong terms (kd, ks, ns, ke) + diffuse/specular maps
-static std::vector<std::shared_ptr<render::Material>>
-buildMaterials(const std::vector<tinyobj::material_t>& tinyMats, const std::string& baseDir)
+void Model::addMesh(std::vector<Vertex> vertices, const std::vector<unsigned>& indices)
 {
-    std::vector<std::shared_ptr<render::Material>> materials;
-    materials.reserve(tinyMats.size());
+    buildTangents(vertices, indices);
 
-    for (const auto& m : tinyMats)
-    {
-        auto mat = std::make_shared<render::Material>();
-
-        // phong scalars/colors
-        mat->setColor({m.diffuse[0], m.diffuse[1], m.diffuse[2]});
-        mat->setSpecular({m.specular[0], m.specular[1], m.specular[2]});
-        mat->setShininess(m.shininess);
-        mat->setEmissive({m.emission[0], m.emission[1], m.emission[2]});
-
-        // map_Kd, diffuse texture
-        if (!m.diffuse_texname.empty())
-        {
-            std::string fullPath = (std::filesystem::path(baseDir) / m.diffuse_texname).string();
-            auto tex = render::TextureLoader::instance().load(fullPath);
-            if (tex)
-            {
-                mat->setTexture("uAlbedo", tex, 0);
-            }
-        }
-
-        // map_Ks, specular mask
-        if (!m.specular_texname.empty())
-        {
-            std::string fullPath = (std::filesystem::path(baseDir) / m.specular_texname).string();
-            auto tex = render::TextureLoader::instance().load(fullPath);
-            if (tex)
-            {
-                mat->setTexture("uSpecularMap", tex, 1);
-            }
-        }
-
-        materials.push_back(std::move(mat));
-    }
-
-    return materials;
-}
-
-// generic Model
-
-bool Model::loadObj(const std::string& path)
-{
-    clearMeshes();
-    m_materials.clear();
-
-    tinyobj::ObjReaderConfig config;
-    config.triangulate = true;
-    config.vertex_color = false;
-    config.mtl_search_path = std::filesystem::path(path).parent_path().string();
-
-    tinyobj::ObjReader reader;
-
-    if (!reader.ParseFromFile(path, config))
-    {
-        if (!reader.Error().empty())
-        {
-            std::cerr << "tinyobj error: " << reader.Error() << "\n";
-        }
-        return false;
-    }
-
-    if (!reader.Warning().empty())
-    {
-        std::cerr << "tinyobj warn: " << reader.Warning() << "\n";
-    }
-
-    const tinyobj::attrib_t& attrib = reader.GetAttrib();
-    const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
-    const std::vector<tinyobj::material_t>& tinyMats = reader.GetMaterials();
-
-    m_materials = buildMaterials(tinyMats, config.mtl_search_path);
-
-    const size_t positionCount = attrib.vertices.size() / 3;
-    const size_t normalCount = attrib.normals.size()  / 3;
-    const size_t texcoordCount = attrib.texcoords.size() / 2;
-
-    m_meshes.reserve(shapes.size());
-    m_meshMaterialIndex.reserve(shapes.size());
-
-    // per-bucket geometry, keyed by face material id
-    struct Bucket {
-        std::vector<Vertex> vertices;
-        std::vector<unsigned> indices;
-        std::unordered_map<VNKey, unsigned, VNKeyHash> uniqueMap;
-        bool needRecomputeNormals = false;
-    };
-
-    for (const auto& shape : shapes)
-    {
-        const size_t faceCount = shape.mesh.indices.size() / 3;
-
-        std::unordered_map<int, Bucket> buckets;
-
-        for (size_t faceIdx = 0; faceIdx < faceCount; faceIdx++)
-        {
-            int matId = -1;
-            if (faceIdx < shape.mesh.material_ids.size())
-            {
-                matId = shape.mesh.material_ids[faceIdx];
-            }
-
-            Bucket& bucket = buckets[matId];
-            if (normalCount == 0)
-            {
-                bucket.needRecomputeNormals = true;
-            }
-
-            for (size_t corner = 0; corner < 3; corner++)
-            {
-                const tinyobj::index_t& cornerIdx = shape.mesh.indices[3 * faceIdx + corner];
-                VNKey key{cornerIdx.vertex_index, cornerIdx.normal_index, cornerIdx.texcoord_index};
-
-                auto it = bucket.uniqueMap.find(key);
-                if (it != bucket.uniqueMap.end())
-                {
-                    bucket.indices.push_back(it->second);
-                    continue;
-                }
-
-                if (cornerIdx.vertex_index < 0 || static_cast<size_t>(cornerIdx.vertex_index) >= positionCount)
-                {
-                    std::cerr << "obj vertex index out of range\n";
-                    return false;
-                }
-
-                glm::vec3 position = {
-                    attrib.vertices[3 * static_cast<size_t>(cornerIdx.vertex_index) + 0],
-                    attrib.vertices[3 * static_cast<size_t>(cornerIdx.vertex_index) + 1],
-                    attrib.vertices[3 * static_cast<size_t>(cornerIdx.vertex_index) + 2]
-                };
-
-                glm::vec3 normal(0.0f);
-                if (cornerIdx.normal_index >= 0 && static_cast<size_t>(cornerIdx.normal_index) < normalCount)
-                {
-                    normal = {
-                        attrib.normals[3 * static_cast<size_t>(cornerIdx.normal_index) + 0],
-                        attrib.normals[3 * static_cast<size_t>(cornerIdx.normal_index) + 1],
-                        attrib.normals[3 * static_cast<size_t>(cornerIdx.normal_index) + 2]
-                    };
-                }
-                else
-                {
-                    bucket.needRecomputeNormals = true;
-                }
-
-                glm::vec2 uv(0.0f);
-                if (cornerIdx.texcoord_index >= 0 && static_cast<size_t>(cornerIdx.texcoord_index) < texcoordCount)
-                {
-                    uv = {
-                        attrib.texcoords[2 * static_cast<size_t>(cornerIdx.texcoord_index) + 0],
-                        attrib.texcoords[2 * static_cast<size_t>(cornerIdx.texcoord_index) + 1]
-                    };
-                }
-
-                unsigned newVertexIdx = static_cast<unsigned>(bucket.vertices.size());
-                bucket.uniqueMap.emplace(key, newVertexIdx);
-                bucket.vertices.push_back(Vertex{position, normal, uv});
-                bucket.indices.push_back(newVertexIdx);
-            }
-        }
-
-        for (auto& [matId, bucket] : buckets)
-        {
-            if (bucket.needRecomputeNormals)
-            {
-                for (auto& vertex : bucket.vertices)
-                {
-                    vertex.normal = glm::vec3(0.0f);
-                }
-
-                if (bucket.indices.size() % 3 != 0)
-                {
-                    std::cerr << "obj not triangulated as expected\n";
-                    return false;
-                }
-
-                for (size_t i = 0; i < bucket.indices.size(); i += 3)
-                {
-                    Vertex& vA = bucket.vertices[bucket.indices[i + 0]];
-                    Vertex& vB = bucket.vertices[bucket.indices[i + 1]];
-                    Vertex& vC = bucket.vertices[bucket.indices[i + 2]];
-
-                    glm::vec3 edge1 = vB.position - vA.position;
-                    glm::vec3 edge2 = vC.position - vA.position;
-
-                    glm::vec3 faceNormal = glm::cross(edge1, edge2);
-
-                    vA.normal += faceNormal;
-                    vB.normal += faceNormal;
-                    vC.normal += faceNormal;
-                }
-
-                for (auto& vertex : bucket.vertices)
-                {
-                    vertex.normal = safeNormalize(vertex.normal);
-                }
-            }
-
-            addMesh(bucket.vertices, bucket.indices, matId);
-        }
-    }
-
-    return true;
-}
-
-void Model::addMesh(const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, int materialIdx)
-{
     // first mesh seeds bounds, later ones only stretch them
     if (m_meshes.empty() && !vertices.empty())
     {
@@ -280,25 +92,14 @@ void Model::addMesh(const std::vector<Vertex>& vertices, const std::vector<unsig
     }
 
     m_meshes.emplace_back(vertices, indices);
-    m_meshMaterialIndex.push_back(materialIdx);
 }
 
 void Model::clearMeshes()
 {
     m_meshes.clear();
-    m_meshMaterialIndex.clear();
 
     m_boundsMin = glm::vec3(0.0f);
     m_boundsMax = glm::vec3(0.0f);
-}
-
-int Model::getMeshMaterialIndex(size_t meshIdx) const
-{
-    if (meshIdx >= m_meshMaterialIndex.size())
-    {
-        return -1;
-    }
-    return m_meshMaterialIndex[meshIdx];
 }
 
 // Box
@@ -362,7 +163,7 @@ Box::Box(float sizeX, float sizeY, float sizeZ)
         indices.push_back(base + 3);
     }
 
-    addMesh(vertices, indices, -1);
+    addMesh(vertices, indices);
 }
 
 unsigned Model::getVertexCount() const
@@ -432,7 +233,7 @@ Sphere::Sphere(float radius, int segments, int rings)
         }
     }
 
-    addMesh(vertices, indices, -1);
+    addMesh(vertices, indices);
 }
 
 Quad::Quad() : Quad(1.0f, 1.0f) {}
@@ -449,7 +250,7 @@ Quad::Quad(float sizeX, float sizeY)
         {{-hx,  hy, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
     };
 
-    addMesh(vertices, {0, 1, 2, 0, 2, 3}, -1);
+    addMesh(vertices, {0, 1, 2, 0, 2, 3});
 }
 
 Circle::Circle() : Circle(0.5f, 32) {}
@@ -480,7 +281,7 @@ Circle::Circle(float radius, int segments)
         indices.push_back(static_cast<unsigned>(segment + 2));
     }
 
-    addMesh(vertices, indices, -1);
+    addMesh(vertices, indices);
 }
 
 } // namespace scene
