@@ -4,6 +4,8 @@
 
 #include "CubeMapLoader.h"
 
+#include "utils/Debug.h"
+
 #include <stb_image.h>
 
 #include <cstring>
@@ -13,6 +15,13 @@ namespace BulletRender {
 namespace render {
 
 constexpr int CHANNELS = 4;
+
+// six files share folder, which names set better than first of them
+static std::string folderOf(const std::string& path)
+{
+    const size_t slash = path.find_last_of("/\\");
+    return slash == std::string::npos ? path : path.substr(0, slash);
+}
 
 // where each face sits in cross:
 //          [+Y]
@@ -36,6 +45,7 @@ CubeMapPixels CubeMapLoader::readFaces(const std::array<std::string, CUBE_FACE_C
 {
     CubeMapPixels pixels;
     pixels.config = cfg;
+    pixels.path = folderOf(paths[0]);
 
     // readers run side by side, so flip must not reach past this one
     stbi_set_flip_vertically_on_load_thread(cfg.flipVertically ? 1 : 0);
@@ -71,6 +81,7 @@ CubeMapPixels CubeMapLoader::readCross(const std::string& path, const CubeMapCon
 {
     CubeMapPixels pixels;
     pixels.config = cfg;
+    pixels.path = path;
 
     stbi_set_flip_vertically_on_load_thread(cfg.flipVertically ? 1 : 0);
 
@@ -127,6 +138,7 @@ std::shared_ptr<CubeMap> CubeMapLoader::uploadFaces(const std::array<const Textu
     }
 
     auto cubemap = std::make_shared<CubeMap>(size, cfg);
+    utils::setLabel(GL_TEXTURE, cubemap->id(), folderOf(faces[0]->path));
 
     for (int face = 0; face < CUBE_FACE_COUNT; face++)
     {
@@ -144,6 +156,7 @@ std::shared_ptr<CubeMap> CubeMapLoader::upload(const CubeMapPixels& pixels)
     }
 
     auto cubemap = std::make_shared<CubeMap>(pixels.faceSize, pixels.config);
+    utils::setLabel(GL_TEXTURE, cubemap->id(), pixels.path);
 
     for (int face = 0; face < CUBE_FACE_COUNT; face++)
     {

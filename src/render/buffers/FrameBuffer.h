@@ -6,6 +6,8 @@
 
 #include <glad/glad.h>
 
+#include <string>
+
 #include <iostream>
 
 namespace BulletRender {
@@ -13,7 +15,7 @@ namespace render {
 
 class FrameBuffer {
 public:
-    FrameBuffer(int width, int height);
+    FrameBuffer(int width, int height, std::string name = {});
     ~FrameBuffer();
 
     void bind();
@@ -37,6 +39,7 @@ private:
     GLuint m_colorTex = 0;
     GLuint m_depthTex = 0;
 
+    std::string m_name;     // resize makes new objects, label needs it again
     int m_width = 0;
     int m_height = 0;
 

@@ -8,6 +8,7 @@
 
 #include <glm/glm.hpp>
 
+#include <string>
 #include <vector>
 
 namespace BulletRender {
@@ -17,6 +18,10 @@ class Model {
 public:
     Model() = default;
     virtual ~Model() = default;
+
+    // asset key it came from, empty when built in place
+    const std::string& getName() const { return m_name; }
+    void setName(std::string name) { m_name = std::move(name); }
 
     // geometry
     const std::vector<Mesh>& getMeshes() const { return m_meshes; }
@@ -32,6 +37,7 @@ public:
     const glm::vec3& getBoundsMax() const { return m_boundsMax; }
 
 protected:
+    std::string m_name;
     std::vector<Mesh> m_meshes;
 
     glm::vec3 m_boundsMin{0.0f};

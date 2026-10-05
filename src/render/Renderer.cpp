@@ -3,6 +3,8 @@
  */
 
 #include "Renderer.h"
+
+#include "utils/Debug.h"
 #include "app/Window.h"
 
 #include <glm/gtx/norm.hpp>
@@ -154,14 +156,14 @@ void Renderer::init()
     // create framebuffer with current window size
     int width, height;
     app::Window::getSize(width, height);
-    s_sceneFbo = std::make_unique<FrameBuffer>(width, height);
+    s_sceneFbo = std::make_unique<FrameBuffer>(width, height, "Scene");
 
     // shadow resources
-    s_dirShadowFbo = std::make_unique<DepthFrameBuffer>(DIR_SHADOW_SIZE, DIR_SHADOW_SIZE);
+    s_dirShadowFbo = std::make_unique<DepthFrameBuffer>(DIR_SHADOW_SIZE, DIR_SHADOW_SIZE, "DirShadow");
     s_spotShadowFbos.clear();
     for (int i = 0; i < MAX_SPOT_SHADOW_MAPS; i++)
     {
-        s_spotShadowFbos.emplace_back(std::make_unique<DepthFrameBuffer>(SPOT_SHADOW_SIZE, SPOT_SHADOW_SIZE));
+        s_spotShadowFbos.emplace_back(std::make_unique<DepthFrameBuffer>(SPOT_SHADOW_SIZE, SPOT_SHADOW_SIZE, "SpotShadow" + std::to_string(i)));
     }
     s_shadowShader = std::make_shared<GraphicsShader>(SHADOW_VERT_PATH, SHADOW_FRAG_PATH);
 
@@ -295,16 +297,24 @@ void Renderer::render(const scene::Scene& scene)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // PrePass
-    for (auto& p : s_pre)
     {
-        if (p->isActive())
+        const utils::DebugGroup group("Pre");
+
+        for (auto& p : s_pre)
         {
-            p->render(scene);
+            if (p->isActive())
+            {
+                const utils::DebugGroup pass(p->getName());
+                p->render(scene);
+            }
         }
     }
 
     // BasePass
-    renderBasePass(scene);
+    {
+        const utils::DebugGroup group("Base");
+        renderBasePass(scene);
+    }
 
     // unbind framebuffer
     if (useFramebuffer)
@@ -312,21 +322,29 @@ void Renderer::render(const scene::Scene& scene)
         s_sceneFbo->unbind();
 
         // PostPass
+        const utils::DebugGroup group("Post");
+
         for (auto& p : s_post)
         {
             if (p->isActive())
             {
+                const utils::DebugGroup pass(p->getName());
                 p->render(scene);
             }
         }
     }
 
     // OverlayPass
-    for (auto& p : s_overlay)
     {
-        if (p->isActive())
+        const utils::DebugGroup group("Overlay");
+
+        for (auto& p : s_overlay)
         {
-            p->render(scene);
+            if (p->isActive())
+            {
+                const utils::DebugGroup pass(p->getName());
+                p->render(scene);
+            }
         }
     }
 }
@@ -343,6 +361,8 @@ static void renderSceneDepthOnly(const scene::Scene& scene, GraphicsShader& shad
         const scene::Model* model = object->getModel().get();
         if (!model) continue;
 
+        const utils::DebugGroup draw(model->getName());
+
         shadowShader.setMat4("uModel", object->getTransform().getMatrix());
 
         for (const auto& mesh : model->getMeshes())
@@ -356,11 +376,15 @@ void Renderer::renderShadowPass(const scene::Scene& scene)
 {
     if (!s_shadowShader) return;
 
+    const utils::DebugGroup group("Shadow");
+
     LightUniforms snapshot = collectLights(scene);
 
     // directional
     if (snapshot.hasDirectional && snapshot.dirCastsShadow && s_dirShadowFbo)
     {
+        const utils::DebugGroup light("Directional");
+
         s_dirShadowFbo->bind();
         glViewport(0, 0, s_dirShadowFbo->getWidth(), s_dirShadowFbo->getHeight());
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -381,6 +405,8 @@ void Renderer::renderShadowPass(const scene::Scene& scene)
     for (int i = 0; i < snapshot.spotCount && i < (int)s_spotShadowFbos.size(); i++)
     {
         if (!snapshot.spotCastsShadow[i]) continue;
+
+        const utils::DebugGroup light("Spot" + std::to_string(i));
 
         auto& fbo = s_spotShadowFbos[i];
         fbo->bind();
@@ -569,6 +595,8 @@ void Renderer::renderBasePass(const scene::Scene& scene)
 
     for (const scene::SceneObject* object : queue)
     {
+        const utils::DebugGroup draw(object->getModel()->getName());
+
         // blended ones still write depth, passes reading it would lose them otherwise
         if (!blending && object->getMaterial().isBlended())
         {

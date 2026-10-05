@@ -20,6 +20,7 @@ struct CubeMapPixels {
     int faceSize = 0;
     std::array<std::vector<unsigned char>, CUBE_FACE_COUNT> faces;
     CubeMapConfig config;
+    std::string path;
 
     bool empty() const { return faceSize == 0; }
 };

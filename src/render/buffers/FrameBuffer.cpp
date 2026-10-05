@@ -4,12 +4,14 @@
 
 #include "FrameBuffer.h"
 
+#include "utils/Debug.h"
+
 #include "render/Renderer.h"
 
 namespace BulletRender {
 namespace render {
 
-FrameBuffer::FrameBuffer(int width, int height) : m_width(width), m_height(height) {
+FrameBuffer::FrameBuffer(int width, int height, std::string name) : m_name(std::move(name)), m_width(width), m_height(height) {
     create();
 }
 
@@ -42,6 +44,13 @@ void FrameBuffer::create()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTex, 0);
+
+    if (!m_name.empty())
+    {
+        utils::setLabel(GL_FRAMEBUFFER, m_fbo, m_name);
+        utils::setLabel(GL_TEXTURE, m_colorTex, m_name + " color");
+        utils::setLabel(GL_TEXTURE, m_depthTex, m_name + " depth");
+    }
 
     // check framebuffer
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)

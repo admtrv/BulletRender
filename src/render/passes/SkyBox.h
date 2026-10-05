@@ -28,6 +28,7 @@ public:
     std::shared_ptr<CubeMap> getCubeMap() const { return m_cubemap; }
 
     void render(const scene::Scene& scene) override;
+    const char* getName() const override { return "SkyBox"; }
 
 private:
     void buildCube();

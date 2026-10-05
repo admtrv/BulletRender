@@ -29,6 +29,7 @@ public:
     std::shared_ptr<GraphicsShader> getShader() const { return m_shader; }
 
     void render(const scene::Scene& scene) override;
+    const char* getName() const override { return "FullscreenTexture"; }
 
 private:
     std::shared_ptr<Texture2D> m_texture;

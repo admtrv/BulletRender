@@ -34,6 +34,8 @@ public:
 
     void draw() const;
 
+    unsigned getVao() const { return m_vao; }
+
     // geometry lives on gpu, only counts kept around
     unsigned getVertexCount() const { return m_vertexCount; }
     unsigned getIndexCount() const { return m_indexCount; }

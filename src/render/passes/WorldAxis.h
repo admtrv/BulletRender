@@ -22,6 +22,7 @@ public:
     ~WorldAxis();
 
     void render(const scene::Scene& scene) override;
+    const char* getName() const override { return "WorldAxis"; }
 
     // set to match grid, both lie in one plane
     float getFadeStart() const { return m_fadeStart; }

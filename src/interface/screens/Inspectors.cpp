@@ -449,7 +449,7 @@ void Editor::drawModelInspector(scene::SceneObject& object)
 
         case AssetAction::Load:
             // loaded geometry joins scene and goes to selected object
-            if (std::shared_ptr<scene::Model> model = scene::ModelLoader::upload(scene::ModelLoader::read(m_modelField.path)))
+            if (std::shared_ptr<scene::Model> model = scene::ModelLoader::upload(scene::ModelLoader::read(m_modelField.path), m_modelField.path))
             {
                 object.setModel(std::move(model));
                 m_modelField.error.clear();

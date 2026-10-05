@@ -4,6 +4,8 @@
 
 #include "TextureLoader.h"
 
+#include "utils/Debug.h"
+
 #include <stb_image.h>
 
 #include <iostream>
@@ -17,6 +19,7 @@ TexturePixels TextureLoader::read(const std::string& path, const TextureLoadOpti
 {
     TexturePixels pixels;
     pixels.options = options;
+    pixels.path = path;
 
     // readers run side by side, so this must not reach past the one asking
     stbi_set_flip_vertically_on_load_thread(options.flipVertically ? 1 : 0);
@@ -51,6 +54,8 @@ std::shared_ptr<Texture2D> TextureLoader::upload(const TexturePixels& pixels)
 
     auto texture = std::make_shared<Texture2D>(pixels.width, pixels.height, config);
     texture->uploadPixels(pixels.data.data(), GL_RGBA, GL_UNSIGNED_BYTE);
+
+    utils::setLabel(GL_TEXTURE, texture->id(), pixels.path);
 
     return texture;
 }

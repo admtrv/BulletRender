@@ -51,6 +51,7 @@ public:
     static glm::vec2 measureText(Font& font, const std::string& text, float size);
 
     void render(const scene::Scene& scene) override;
+    const char* getName() const override { return "Canvas"; }
 
     // drops what was added, whether views drew it or not
     void endFrame();

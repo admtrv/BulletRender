@@ -16,6 +16,8 @@ public:
     virtual ~IRenderPass() = default;
     virtual void render(const scene::Scene& scene) = 0;
 
+    virtual const char* getName() const = 0;
+
     // disabled pass draws nothing, renderer can skip this work
     virtual bool isActive() const { return m_enabled; }
     void setEnabled(bool enabled) { m_enabled = enabled; }

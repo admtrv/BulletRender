@@ -22,6 +22,7 @@ public:
     ~Grid();
 
     void render(const scene::Scene& scene) override;
+    const char* getName() const override { return "Grid"; }
 
     float getFadeStart() const { return m_fadeStart; }
     float getFadeEnd() const { return m_fadeEnd; }

@@ -26,6 +26,7 @@ struct TexturePixels {
     int height = 0;
     std::vector<unsigned char> data;
     TextureLoadOptions options;
+    std::string path;
 
     bool empty() const { return data.empty(); }
 };

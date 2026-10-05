@@ -22,7 +22,7 @@ struct MeshData {
 class ModelLoader {
 public:
     static std::vector<MeshData> read(const std::string& path);
-    static std::shared_ptr<Model> upload(const std::vector<MeshData>& meshes);
+    static std::shared_ptr<Model> upload(const std::vector<MeshData>& meshes, const std::string& path = {});
 };
 
 } // namespace scene

@@ -4,6 +4,8 @@
 
 #include "Shader.h"
 
+#include "utils/Debug.h"
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -62,7 +64,7 @@ unsigned Shader::compileStage(unsigned type, const char* src, const std::string&
     return shader;
 }
 
-bool Shader::linkProgram(std::initializer_list<unsigned> stages)
+bool Shader::linkProgram(std::initializer_list<unsigned> stages, const std::string& name)
 {
     // any stage failed to compile
     for (unsigned s : stages)
@@ -102,6 +104,11 @@ bool Shader::linkProgram(std::initializer_list<unsigned> stages)
 
         glDeleteProgram(m_id);
         m_id = 0;
+    }
+
+    if (m_id)
+    {
+        utils::setLabel(GL_PROGRAM, m_id, name);
     }
 
     for (unsigned s : stages)
@@ -173,7 +180,7 @@ bool GraphicsShader::loadFromFiles(const std::string& vertPath, const std::strin
     unsigned vertexShader = compileStage(GL_VERTEX_SHADER, vertString.c_str(), vertPath);
     unsigned fragmentShader = compileStage(GL_FRAGMENT_SHADER, fragString.c_str(), fragPath);
 
-    return linkProgram({vertexShader, fragmentShader});
+    return linkProgram({vertexShader, fragmentShader}, vertPath);
 }
 
 // compute shader
@@ -195,7 +202,7 @@ bool ComputeShader::loadFromFile(const std::string& compPath)
 
     unsigned computeStage = compileStage(GL_COMPUTE_SHADER, compString.c_str(), compPath);
 
-    return linkProgram({computeStage});
+    return linkProgram({computeStage}, compPath);
 }
 
 void ComputeShader::dispatch(unsigned groupsX, unsigned groupsY, unsigned groupsZ) const

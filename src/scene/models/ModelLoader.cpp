@@ -4,6 +4,8 @@
 
 #include "ModelLoader.h"
 
+#include "utils/Debug.h"
+
 #include "ObjLoader.h"
 
 #include <filesystem>
@@ -26,7 +28,7 @@ std::vector<MeshData> ModelLoader::read(const std::string& path)
     return {};
 }
 
-std::shared_ptr<Model> ModelLoader::upload(const std::vector<MeshData>& meshes)
+std::shared_ptr<Model> ModelLoader::upload(const std::vector<MeshData>& meshes, const std::string& path)
 {
     if (meshes.empty())
     {
@@ -34,10 +36,16 @@ std::shared_ptr<Model> ModelLoader::upload(const std::vector<MeshData>& meshes)
     }
 
     auto model = std::make_shared<Model>();
+    model->setName(path);
 
     for (const MeshData& mesh : meshes)
     {
         model->addMesh(mesh.vertices, mesh.indices);
+    }
+
+    for (const Mesh& mesh : model->getMeshes())
+    {
+        utils::setLabel(GL_VERTEX_ARRAY, mesh.getVao(), path);
     }
 
     return model;

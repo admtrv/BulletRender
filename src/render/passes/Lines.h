@@ -37,6 +37,7 @@ public:
     void addPolyline(const std::vector<glm::vec3>& pts, const glm::vec3& color);
 
     void render(const scene::Scene& scene) override;
+    const char* getName() const override { return "Lines"; }
 
 private:
     void ensureGpu_();

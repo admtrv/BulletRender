@@ -40,7 +40,7 @@ protected:
     static unsigned compileStage(unsigned type, const char* src, const std::string& tag);
 
     // attach the given stages, link them into m_id;
-    bool linkProgram(std::initializer_list<unsigned> stages);
+    bool linkProgram(std::initializer_list<unsigned> stages, const std::string& name);
 
     unsigned m_id = 0;
 

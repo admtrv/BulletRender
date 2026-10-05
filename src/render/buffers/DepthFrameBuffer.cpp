@@ -4,6 +4,8 @@
 
 #include "DepthFrameBuffer.h"
 
+#include "utils/Debug.h"
+
 #include "render/Renderer.h"
 
 #include <iostream>
@@ -11,7 +13,7 @@
 namespace BulletRender {
 namespace render {
 
-DepthFrameBuffer::DepthFrameBuffer(int width, int height) : m_width(width), m_height(height)
+DepthFrameBuffer::DepthFrameBuffer(int width, int height, std::string name) : m_name(std::move(name)), m_width(width), m_height(height)
 {
     create();
 }
@@ -46,6 +48,12 @@ void DepthFrameBuffer::create()
     // no color attachment for depth-only FBO
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
+
+    if (!m_name.empty())
+    {
+        utils::setLabel(GL_FRAMEBUFFER, m_fbo, m_name);
+        utils::setLabel(GL_TEXTURE, m_depthTex, m_name + " depth");
+    }
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
