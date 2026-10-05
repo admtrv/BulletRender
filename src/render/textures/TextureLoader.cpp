@@ -11,68 +11,48 @@
 namespace BulletRender {
 namespace render {
 
-TextureLoader& TextureLoader::instance()
+constexpr int CHANNELS = 4;
+
+TexturePixels TextureLoader::read(const std::string& path, const TextureLoadOptions& options)
 {
-    static TextureLoader inst;
-    return inst;
-}
+    TexturePixels pixels;
+    pixels.options = options;
 
-std::shared_ptr<Texture2D> TextureLoader::load(const std::string& path, const TextureLoadOptions& opts)
-{
-    auto it = m_cache.find(path);
-    if (it != m_cache.end())
-    {
-        if (auto cached = it->second.lock())
-        {
-            return cached;
-        }
-        m_cache.erase(it);
-    }
+    // readers run side by side, so this must not reach past the one asking
+    stbi_set_flip_vertically_on_load_thread(options.flipVertically ? 1 : 0);
 
-    auto tex = loadFromDisk(path, opts);
-    if (tex)
-    {
-        m_cache[path] = tex;
-    }
-    return tex;
-}
-
-void TextureLoader::remove(const std::string& path)
-{
-    m_cache.erase(path);
-}
-
-void TextureLoader::clear()
-{
-    m_cache.clear();
-}
-
-std::shared_ptr<Texture2D> TextureLoader::loadFromDisk(const std::string& path, const TextureLoadOptions& opts)
-{
-    stbi_set_flip_vertically_on_load(opts.flipVertically ? 1 : 0);
-
-    int width = 0;
-    int height = 0;
     int channels = 0;
-    stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &channels, 4);
+    stbi_uc* read = stbi_load(path.c_str(), &pixels.width, &pixels.height, &channels, CHANNELS);
 
-    if (!pixels)
+    if (!read)
     {
-        std::cerr << "texture load failed: " << path << " (" << stbi_failure_reason() << ")\n";
+        std::cerr << "texture read failed: " << path << " (" << stbi_failure_reason() << ")\n";
+        return pixels;
+    }
+
+    pixels.data.assign(read, read + size_t(pixels.width) * pixels.height * CHANNELS);
+    stbi_image_free(read);
+
+    return pixels;
+}
+
+std::shared_ptr<Texture2D> TextureLoader::upload(const TexturePixels& pixels)
+{
+    if (pixels.empty())
+    {
         return nullptr;
     }
 
-    Texture2DConfig cfg;
-    cfg.internalFormat = GL_RGBA8;
-    cfg.sRGB = opts.sRGB;
-    cfg.generateMipmaps = opts.generateMipmaps;
-    cfg.sampler = opts.sampler;
+    Texture2DConfig config;
+    config.internalFormat = GL_RGBA8;
+    config.sRGB = pixels.options.sRGB;
+    config.generateMipmaps = pixels.options.generateMipmaps;
+    config.sampler = pixels.options.sampler;
 
-    auto tex = std::make_shared<Texture2D>(width, height, cfg);
-    tex->uploadPixels(pixels, GL_RGBA, GL_UNSIGNED_BYTE);
+    auto texture = std::make_shared<Texture2D>(pixels.width, pixels.height, config);
+    texture->uploadPixels(pixels.data.data(), GL_RGBA, GL_UNSIGNED_BYTE);
 
-    stbi_image_free(pixels);
-    return tex;
+    return texture;
 }
 
 } // namespace render

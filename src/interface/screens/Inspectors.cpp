@@ -449,7 +449,7 @@ void Editor::drawModelInspector(scene::SceneObject& object)
 
         case AssetAction::Load:
             // loaded geometry joins scene and goes to selected object
-            if (std::shared_ptr<scene::Model> model = scene::ModelLoader::instance().load(m_modelField.path))
+            if (std::shared_ptr<scene::Model> model = scene::ModelLoader::upload(scene::ModelLoader::read(m_modelField.path)))
             {
                 object.setModel(std::move(model));
                 m_modelField.error.clear();
@@ -565,7 +565,7 @@ void Editor::importMaterial(render::Material& material, const std::string& path)
     {
         auto& [target, texturePath] = slots[slot];
 
-        target->texture = texturePath->empty() ? nullptr : render::TextureLoader::instance().load(*texturePath);
+        target->texture = texturePath->empty() ? nullptr : render::TextureLoader::upload(render::TextureLoader::read(*texturePath));
 
         std::snprintf(m_slotFields[slot].path, sizeof(m_slotFields[slot].path), "%s", texturePath->c_str());
     }
@@ -584,7 +584,7 @@ void Editor::drawSlot(const char* label, render::TextureSlot& slot, AssetFieldSt
             break;
 
         case AssetAction::Load:
-            slot.texture = render::TextureLoader::instance().load(state.path);
+            slot.texture = render::TextureLoader::upload(render::TextureLoader::read(state.path));
             state.error = slot.texture ? std::string{} : "failed to load " + std::string(state.path);
             break;
 

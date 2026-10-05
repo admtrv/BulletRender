@@ -8,7 +8,7 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include <vector>
 
 namespace BulletRender {
 namespace render {
@@ -20,26 +20,20 @@ struct TextureLoadOptions {
     SamplerConfig sampler{};
 };
 
-// classic asset cache for Texture2D, keyed by absolute path
+// unpacked file, before gl has seen any of it
+struct TexturePixels {
+    int width = 0;
+    int height = 0;
+    std::vector<unsigned char> data;
+    TextureLoadOptions options;
+
+    bool empty() const { return data.empty(); }
+};
+
 class TextureLoader {
 public:
-    static TextureLoader& instance();
-
-    std::shared_ptr<Texture2D> load(const std::string& path, const TextureLoadOptions& opts = {});
-
-    void remove(const std::string& path);     // next load reads the file again
-    void clear();
-
-private:
-    TextureLoader() = default;
-    ~TextureLoader() = default;
-
-    TextureLoader(const TextureLoader&) = delete;
-    TextureLoader& operator=(const TextureLoader&) = delete;
-
-    std::shared_ptr<Texture2D> loadFromDisk(const std::string& path, const TextureLoadOptions& opts);
-
-    std::unordered_map<std::string, std::weak_ptr<Texture2D>> m_cache;
+    static TexturePixels read(const std::string& path, const TextureLoadOptions& options = {});
+    static std::shared_ptr<Texture2D> upload(const TexturePixels& pixels);
 };
 
 } // namespace render

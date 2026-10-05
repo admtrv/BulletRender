@@ -10,6 +10,7 @@
 #include "app/Loop.h"
 #include "app/Window.h"
 #include "render/Renderer.h"
+#include "render/textures/CubeMapLoader.h"
 
 #include <array>
 
@@ -162,7 +163,7 @@ void Editor::drawEnvironmentSection()
         return;
     }
 
-    for (int face = 0; face < 6; face++)
+    for (int face = 0; face < render::CUBE_FACE_COUNT; face++)
     {
         slotChanged(FACE_LABELS[face], m_faceFields[face]);
     }
@@ -183,7 +184,7 @@ void Editor::applyBackground()
 
     if (m_skyLayout == SkyLayout::Cross && m_crossField.path[0] != '\0')
     {
-        m_skybox->setCubeMap(std::make_shared<render::CubeMap>(std::string(m_crossField.path)));
+        m_skybox->setCubeMap(render::CubeMapLoader::upload(render::CubeMapLoader::readCross(m_crossField.path)));
         m_skybox->setEnabled(true);
 
         return;
@@ -191,9 +192,9 @@ void Editor::applyBackground()
 
     if (m_skyLayout == SkyLayout::Faces)
     {
-        std::array<std::string, 6> faces;
+        std::array<std::string, render::CUBE_FACE_COUNT> faces;
 
-        for (int face = 0; face < 6; face++)
+        for (int face = 0; face < render::CUBE_FACE_COUNT; face++)
         {
             if (m_faceFields[face].path[0] == '\0')
             {
@@ -204,7 +205,7 @@ void Editor::applyBackground()
             faces[face] = m_faceFields[face].path;
         }
 
-        m_skybox->setCubeMap(std::make_shared<render::CubeMap>(faces));
+        m_skybox->setCubeMap(render::CubeMapLoader::upload(render::CubeMapLoader::readFaces(faces)));
         m_skybox->setEnabled(true);
 
         return;

@@ -81,7 +81,7 @@ static void buildNormals(std::vector<Vertex>& vertices, const std::vector<unsign
     }
 }
 
-std::shared_ptr<Model> ObjLoader::load(const std::string& path)
+std::vector<MeshData> ObjLoader::read(const std::string& path)
 {
     tinyobj::ObjReaderConfig config;
     config.triangulate = true;
@@ -92,7 +92,7 @@ std::shared_ptr<Model> ObjLoader::load(const std::string& path)
     if (!reader.ParseFromFile(path, config))
     {
         std::cerr << "obj load failed: " << path << " (" << reader.Error() << ")\n";
-        return nullptr;
+        return {};
     }
 
     if (!reader.Warning().empty())
@@ -106,7 +106,7 @@ std::shared_ptr<Model> ObjLoader::load(const std::string& path)
     const size_t normalCount = attributes.normals.size() / 3;
     const size_t uvCount = attributes.texcoords.size() / 2;
 
-    auto model = std::make_shared<Model>();
+    std::vector<MeshData> meshes;
 
     for (const tinyobj::shape_t& shape : reader.GetShapes())
     {
@@ -129,7 +129,7 @@ std::shared_ptr<Model> ObjLoader::load(const std::string& path)
             if (corner.position < 0 || static_cast<size_t>(corner.position) >= positionCount)
             {
                 std::cerr << "obj vertex index out of range: " << path << "\n";
-                return nullptr;
+                return {};
             }
 
             Vertex vertex{};
@@ -171,10 +171,10 @@ std::shared_ptr<Model> ObjLoader::load(const std::string& path)
             buildNormals(vertices, indices);
         }
 
-        model->addMesh(vertices, indices);
+        meshes.push_back({std::move(vertices), std::move(indices)});
     }
 
-    return model;
+    return meshes;
 }
 
 } // namespace scene

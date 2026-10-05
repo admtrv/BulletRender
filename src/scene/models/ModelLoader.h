@@ -8,31 +8,21 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include <vector>
 
 namespace BulletRender {
 namespace scene {
 
-// classic asset cache for Model, keyed by path
+// one mesh, before gl has buffer for it
+struct MeshData {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned> indices;
+};
+
 class ModelLoader {
 public:
-    static ModelLoader& instance();
-
-    std::shared_ptr<Model> load(const std::string& path);
-
-    void remove(const std::string& path);     // next load reads the file again
-    void clear();
-
-private:
-    ModelLoader() = default;
-    ~ModelLoader() = default;
-
-    ModelLoader(const ModelLoader&) = delete;
-    ModelLoader& operator=(const ModelLoader&) = delete;
-
-    std::shared_ptr<Model> loadFromDisk(const std::string& path);
-
-    std::unordered_map<std::string, std::weak_ptr<Model>> m_cache;
+    static std::vector<MeshData> read(const std::string& path);
+    static std::shared_ptr<Model> upload(const std::vector<MeshData>& meshes);
 };
 
 } // namespace scene

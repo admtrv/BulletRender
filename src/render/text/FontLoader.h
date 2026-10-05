@@ -8,31 +8,16 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include <vector>
 
 namespace BulletRender {
 namespace render {
 
-// classic asset cache for Font, keyed by path
+// atlas is rasterized on draw, so only file is read ahead
 class FontLoader {
 public:
-    static FontLoader& instance();
-
-    std::shared_ptr<Font> load(const std::string& path);
-
-    void remove(const std::string& path);     // next load reads the file again
-    void clear();
-
-private:
-    FontLoader() = default;
-    ~FontLoader() = default;
-
-    FontLoader(const FontLoader&) = delete;
-    FontLoader& operator=(const FontLoader&) = delete;
-
-    std::shared_ptr<Font> loadFromDisk(const std::string& path);
-
-    std::unordered_map<std::string, std::weak_ptr<Font>> m_cache;
+    static std::vector<unsigned char> read(const std::string& path);
+    static std::shared_ptr<Font> upload(std::vector<unsigned char> data);
 };
 
 } // namespace render
